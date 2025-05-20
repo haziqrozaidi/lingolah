@@ -9,7 +9,6 @@ const navigationSections = ref([
     isOpen: true,
     items: [
       { name: 'Dashboard', path: '/', icon: 'pi pi-home' },
-      { name: 'My Activities', path: '/analytics', icon: 'pi pi-chart-line' },
     ],
   },
   {
@@ -18,7 +17,6 @@ const navigationSections = ref([
     items: [
       { name: 'Learn', path: '/learn', icon: 'pi pi-folder' },
       { name: 'Review', path: '/review', icon: 'pi pi-check-square' },
-      { name: 'Progress', path: '/progress', icon: 'pi pi-list-check' },
     ],
   },
   {
@@ -65,7 +63,7 @@ const toggleSidebar = () => {
     class="h-full flex flex-col bg-white transition-all duration-300"
     :class="{ 'w-20': isSidebarCollapsed, 'w-64': !isSidebarCollapsed }"
   >
-    <!-- Logo Section - Larger logo, no border or separator -->
+    <!-- Logo Section - unchanged -->
     <div class="h-[72px] p-4 flex items-center justify-between">
       <h1 class="text-2xl font-bold text-blue-600" v-if="!isSidebarCollapsed">LingoLah</h1>
       <div class="w-10 h-10 flex items-center justify-center" v-else>
@@ -79,10 +77,10 @@ const toggleSidebar = () => {
       </button>
     </div>
 
-    <!-- Navigation - Added some top margin to create space instead of border -->
+    <!-- Navigation - unchanged section headers -->
     <nav class="flex-grow py-2 mt-2 overflow-y-auto">
       <div v-for="(section, sIndex) in navigationSections" :key="sIndex" class="mb-2">
-        <!-- Section Header -->
+        <!-- Section Header - unchanged -->
         <div
           @click="toggleSection(section)"
           class="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-gray-100 text-gray-700"
@@ -97,45 +95,45 @@ const toggleSidebar = () => {
 
         <div v-else class="mx-2 my-3 h-px bg-gray-100"></div>
 
-        <!-- Section Items -->
+        <!-- Section Items - MODIFIED to use RouterLink directly -->
         <ul v-if="!isSidebarCollapsed" :class="{ hidden: !section.isOpen }" class="space-y-1 mb-3">
           <li v-for="item in section.items" :key="item.path">
-            <RouterLink :to="item.path" v-slot="{ isActive }" custom>
-              <a
-                :class="[
-                  'flex items-center px-4 py-2 text-sm font-medium rounded-lg mx-2',
-                  isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100',
-                ]"
-                :href="item.path"
-              >
-                <i :class="[item.icon, 'mr-3 text-lg']"></i>
-                <span>{{ item.name }}</span>
-              </a>
+            <RouterLink
+              :to="item.path"
+              class="flex items-center px-4 py-2 text-sm font-medium rounded-lg mx-2"
+              :class="[
+                $route.path === item.path
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100',
+              ]"
+            >
+              <i :class="[item.icon, 'mr-3 text-lg']"></i>
+              <span>{{ item.name }}</span>
             </RouterLink>
           </li>
         </ul>
 
-        <!-- Collapsed View - Icons Only -->
+        <!-- Collapsed View - Icons Only - MODIFIED to use RouterLink directly -->
         <ul v-else class="space-y-1 mb-2">
           <li v-for="item in section.items" :key="item.path">
-            <RouterLink :to="item.path" v-slot="{ isActive }" custom>
-              <a
-                :class="[
-                  'flex justify-center items-center p-2 rounded-lg mx-2',
-                  isActive ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-100',
-                ]"
-                :href="item.path"
-                :title="item.name"
-              >
-                <i :class="[item.icon, 'text-lg']"></i>
-              </a>
+            <RouterLink
+              :to="item.path"
+              class="flex justify-center items-center p-2 rounded-lg mx-2"
+              :class="[
+                $route.path === item.path
+                  ? 'bg-blue-50 text-blue-600'
+                  : 'text-gray-700 hover:bg-gray-100',
+              ]"
+              :title="item.name"
+            >
+              <i :class="[item.icon, 'text-lg']"></i>
             </RouterLink>
           </li>
         </ul>
       </div>
     </nav>
 
-    <!-- User Profile Section -->
+    <!-- User Profile Section - unchanged -->
     <div class="p-3 border-t border-gray-200">
       <div class="flex items-center" :class="{ 'justify-center': isSidebarCollapsed }">
         <div class="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0"></div>
