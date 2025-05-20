@@ -1,28 +1,27 @@
 <template>
-  <div class="forum-container">
-    <!-- Left Sidebar -->
-    <ForumSidebarLeft />
-    
-    <!-- Main Content -->
-    <ForumMainContent :posts="posts" />
-    
-    <!-- Right Sidebar -->
-    <ForumSidebarRight :videos="videos" />
-  </div>
+    <div class="forum-container min-h-screen bg-gray-50 p-5 grid grid-cols-1 md:grid-cols-[minmax(250px,250px)_1fr] lg:grid-cols-[minmax(250px,250px)_1fr_minmax(325px,325px)] gap-5 max-w-7xl mx-auto">
+        <!-- Left Sidebar -->
+        <ForumSidebarLeft class="hidden md:block" />
+
+        <!-- Main Content -->
+        <ForumMainContent :posts="posts" class="flex-1" />
+
+        <!-- Right Sidebar -->
+        <ForumSidebarRight :videos="videos" class="hidden lg:block" />
+    </div>
 </template>
 
 <script>
-import ForumSidebarLeft from '../components/ForumSidebarLeft.vue';
-import ForumMainContent from '../components/ForumMainContent.vue';
-import ForumSidebarRight from '../components/ForumSidebarRight.vue';
-import '../assets/style.css';
+import ForumSidebarLeft from '../components/Forum/ForumSidebarLeft.vue';
+import ForumMainContent from '../components/Forum/ForumMainContent.vue';
+import ForumSidebarRight from '../components/Forum/ForumSidebarRight.vue';
 
 export default {
     components: {
-    ForumSidebarLeft,
-    ForumMainContent,
-    ForumSidebarRight
-  },
+        ForumSidebarLeft,
+        ForumMainContent,
+        ForumSidebarRight
+    },
     data() {
         return {
             posts: [
