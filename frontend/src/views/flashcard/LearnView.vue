@@ -1,160 +1,35 @@
 <script setup>
-import { ref } from 'vue'
-
-// Dummy data for flashcard sets
-const flashcardCategories = ref([
-  {
-    id: 1,
-    name: 'Beginner Vocabulary',
-    description: 'Essential words and phrases for absolute beginners',
-    icon: 'pi pi-book',
-    color: 'bg-blue-100',
-    sets: [
-      {
-        id: 101,
-        name: 'Greetings',
-        description: 'Common greetings and introductions',
-        cardCount: 25,
-      },
-      { id: 102, name: 'Numbers', description: 'Count from 1 to 100 in Malay', cardCount: 30 },
-      { id: 103, name: 'Colors', description: 'Basic color vocabulary', cardCount: 15 },
-      { id: 104, name: 'Family', description: 'Family relationship terms', cardCount: 20 },
-    ],
-  },
-  {
-    id: 2,
-    name: 'Daily Conversations',
-    description: 'Practical phrases for everyday situations',
-    icon: 'pi pi-comments',
-    color: 'bg-green-100',
-    sets: [
-      {
-        id: 201,
-        name: 'At the Restaurant',
-        description: 'Order food and ask for the bill',
-        cardCount: 40,
-      },
-      {
-        id: 202,
-        name: 'Shopping',
-        description: 'Negotiate prices and make purchases',
-        cardCount: 35,
-      },
-      {
-        id: 203,
-        name: 'Transportation',
-        description: 'Get around using public transport',
-        cardCount: 30,
-      },
-      {
-        id: 204,
-        name: 'Asking for Directions',
-        description: 'Find your way around town',
-        cardCount: 25,
-      },
-    ],
-  },
-  {
-    id: 3,
-    name: 'Grammar Concepts',
-    description: 'Fundamental grammar rules and patterns',
-    icon: 'pi pi-file-edit',
-    color: 'bg-purple-100',
-    sets: [
-      {
-        id: 301,
-        name: 'Subject Pronouns',
-        description: 'Personal pronouns in Malay',
-        cardCount: 15,
-      },
-      {
-        id: 302,
-        name: 'Verb Affixes',
-        description: 'Common verb prefixes and suffixes',
-        cardCount: 30,
-      },
-      {
-        id: 303,
-        name: 'Question Forms',
-        description: 'How to ask different types of questions',
-        cardCount: 25,
-      },
-    ],
-  },
-  {
-    id: 4,
-    name: 'Thematic Vocabulary',
-    description: 'Words grouped by themes and situations',
-    icon: 'pi pi-list',
-    color: 'bg-yellow-100',
-    sets: [
-      {
-        id: 401,
-        name: 'Weather',
-        description: 'Talk about the weather and seasons',
-        cardCount: 20,
-      },
-      {
-        id: 402,
-        name: 'Food and Cuisine',
-        description: 'Malaysian dishes and ingredients',
-        cardCount: 45,
-      },
-      {
-        id: 403,
-        name: 'Hobbies',
-        description: 'Activities and interests vocabulary',
-        cardCount: 30,
-      },
-      {
-        id: 404,
-        name: 'Professions',
-        description: 'Job titles and workplace terms',
-        cardCount: 25,
-      },
-    ],
-  },
-  {
-    id: 5,
-    name: 'Cultural Expressions',
-    description: 'Idioms, proverbs, and cultural phrases',
-    icon: 'pi pi-globe',
-    color: 'bg-red-100',
-    sets: [
-      {
-        id: 501,
-        name: 'Malay Proverbs',
-        description: 'Common proverbs and their meanings',
-        cardCount: 30,
-      },
-      {
-        id: 502,
-        name: 'Slang and Colloquialisms',
-        description: 'Informal expressions used daily',
-        cardCount: 40,
-      },
-      {
-        id: 503,
-        name: 'Cultural References',
-        description: 'Terms related to Malaysian culture',
-        cardCount: 35,
-      },
-    ],
-  },
-])
+import { ref, onMounted } from 'vue'
+import { flashcardCategories, getFlashcards } from '@/data/flashcardData'
 
 // Selected category (initially the first one)
-const selectedCategory = ref(flashcardCategories.value[0])
+const selectedCategory = ref(null)
 
 // Function to select a category
 const selectCategory = (category) => {
   selectedCategory.value = category
 }
 
+// Set initial selected category on mount
+onMounted(() => {
+  selectedCategory.value = flashcardCategories.value[0]
+})
+
+// Modal state
+const isModalOpen = ref(false)
+const selectedSet = ref(null)
+const selectedSetFlashcards = ref([])
+
 // Function to handle clicking on a flashcard set
 const handleSetClick = (set) => {
-  console.log(`Selected set: ${set.name}`)
-  // This would navigate to the specific set view in a real implementation
+  selectedSet.value = set
+  selectedSetFlashcards.value = getFlashcards(set.id)
+  isModalOpen.value = true
+}
+
+// Function to close the modal
+const closeModal = () => {
+  isModalOpen.value = false
 }
 
 // Helper functions to calculate difficulty dots
@@ -179,7 +54,7 @@ const getEmptyDots = (cardCount) => {
     </div>
 
     <!-- Category tabs -->
-    <div class="mb-6 overflow-x-auto">
+    <div class="mb-6 overflow-x-auto" v-if="selectedCategory">
       <div class="flex space-x-2 pb-2">
         <button
           v-for="category in flashcardCategories"
@@ -199,7 +74,7 @@ const getEmptyDots = (cardCount) => {
     </div>
 
     <!-- Category description -->
-    <div class="mb-6">
+    <div class="mb-6" v-if="selectedCategory">
       <div :class="['p-4 rounded-lg', selectedCategory.color]">
         <h2 class="text-xl font-semibold text-gray-800">{{ selectedCategory.name }}</h2>
         <p class="text-gray-700">{{ selectedCategory.description }}</p>
@@ -207,7 +82,7 @@ const getEmptyDots = (cardCount) => {
     </div>
 
     <!-- Flashcard sets grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" v-if="selectedCategory">
       <div
         v-for="set in selectedCategory.sets"
         :key="set.id"
@@ -238,12 +113,92 @@ const getEmptyDots = (cardCount) => {
     </div>
 
     <!-- Empty state (shown when a category has no sets) -->
-    <div v-if="selectedCategory.sets.length === 0" class="bg-gray-50 rounded-lg p-8 text-center">
+    <div
+      v-if="selectedCategory && selectedCategory.sets.length === 0"
+      class="bg-gray-50 rounded-lg p-8 text-center"
+    >
       <div class="text-gray-400 text-5xl mb-4">
         <i class="pi pi-inbox"></i>
       </div>
       <h3 class="text-xl font-medium text-gray-700 mb-2">No flashcard sets available</h3>
       <p class="text-gray-500 mb-4">There are no flashcard sets in this category yet.</p>
+    </div>
+
+    <!-- Improved Flashcard Set Modal -->
+    <div
+      v-if="isModalOpen"
+      class="fixed inset-0 flex items-center justify-center z-50"
+      @click.self="closeModal"
+    >
+      <div class="absolute inset-0 bg-gray-800 opacity-50"></div>
+      <div
+        class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden relative z-10"
+      >
+        <!-- Modal Header with visual improvements -->
+        <div class="p-6 border-b border-gray-100">
+          <div class="flex items-start justify-between">
+            <div>
+              <h3 class="text-2xl font-semibold text-gray-800">{{ selectedSet?.name }}</h3>
+              <p class="text-gray-600 mt-1">{{ selectedSet?.description }}</p>
+            </div>
+            <button
+              @click="closeModal"
+              class="text-gray-400 hover:text-gray-600 focus:outline-none p-1 rounded-full hover:bg-gray-100 transition-colors"
+            >
+              <i class="pi pi-times text-xl"></i>
+            </button>
+          </div>
+
+          <!-- Category badge -->
+          <div
+            class="mt-3 inline-flex items-center px-2.5 py-0.5 rounded-md text-sm font-medium bg-blue-50 text-blue-700"
+            v-if="selectedCategory"
+          >
+            <i :class="[selectedCategory.icon, 'mr-1 text-sm']"></i>
+            {{ selectedCategory.name }}
+          </div>
+        </div>
+
+        <!-- Modal Body with improved card design -->
+        <div class="p-6 overflow-y-auto flex-grow">
+          <div class="mb-4">
+            <h4 class="text-lg font-semibold text-gray-800 mb-3">Flashcards in this set</h4>
+            <p class="text-gray-600">
+              Click "Start Learning" to begin your study session with these flashcards.
+            </p>
+          </div>
+
+          <!-- Preview of flashcards with improved styling -->
+          <div class="space-y-3 mt-6">
+            <div
+              v-for="card in selectedSetFlashcards"
+              :key="card.id"
+              class="border border-gray-200 rounded-xl p-5 bg-white hover:shadow-md transition-shadow"
+            >
+              <div class="flex justify-between items-start">
+                <div class="flex-1">
+                  <div class="text-xl font-medium text-gray-800 mb-1">{{ card.malay }}</div>
+                  <div class="text-gray-600">{{ card.english }}</div>
+                </div>
+                <div
+                  class="ml-4 flex-shrink-0 bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-1.5 rounded-full"
+                >
+                  {{ card.id }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer with just the button -->
+        <div class="p-6 border-t border-gray-100 flex justify-end">
+          <button
+            class="px-8 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 transition-colors flex items-center shadow-sm"
+          >
+            Start Learning <i class="pi pi-arrow-right ml-2"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
