@@ -1,13 +1,18 @@
 <template>
-    <div class="forum-container min-h-screen bg-gray-50 p-5 grid grid-cols-1 md:grid-cols-[minmax(250px,250px)_1fr] lg:grid-cols-[minmax(250px,250px)_1fr_minmax(325px,325px)] gap-5 max-w-7xl mx-auto">
-        <!-- Left Sidebar -->
-        <ForumSidebarLeft class="hidden md:block" />
-
-        <!-- Main Content -->
-        <ForumMainContent :posts="posts" class="flex-1" />
-
-        <!-- Right Sidebar -->
-        <ForumSidebarRight :videos="videos" class="hidden lg:block" />
+    <div
+        class="forum-container min-h-[calc(100vh-72px)] bg-gray-50 grid grid-cols-1 lg:grid-cols-[80px_240px_1fr_300px] gap-0">
+        <div class="border-r border-gray-200">
+            <Sidebar />
+        </div>
+        <div class="sidebar-left overflow-y-auto p-4 border-r border-gray-200">
+            <ForumSidebarLeft />
+        </div>
+        <div class="main-content overflow-y-auto p-4">
+            <ForumMainContent :posts="posts" />
+        </div>
+        <div class="sidebar-right  overflow-y-auto p-4 hidden lg:block">
+            <ForumSidebarRight :videos="videos" />
+        </div>
     </div>
 </template>
 
