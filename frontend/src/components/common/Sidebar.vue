@@ -23,7 +23,7 @@ const navigationSections = ref([
     title: 'Forum',
     isOpen: false,
     items: [
-      { name: 'Team', path: '/team', icon: 'pi pi-users' },
+      { name: 'Community', path: '/forum', icon: 'pi pi-users' },
       { name: 'Reports', path: '/reports', icon: 'pi pi-chart-bar' },
       { name: 'Documents', path: '/documents', icon: 'pi pi-file' },
     ],
