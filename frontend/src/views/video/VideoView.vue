@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 // Dummy data for video categories
 const videoCategories = ref([
@@ -155,6 +155,32 @@ const videoCategories = ref([
   },
 ])
 
+// Search functionality
+const searchQuery = ref('')
+
+// Filtered categories based on search
+const filteredCategories = computed(() => {
+  if (!searchQuery.value.trim()) {
+    return videoCategories.value
+  }
+  
+  const query = searchQuery.value.toLowerCase()
+  
+  return videoCategories.value.map(category => {
+    // Filter videos within each category
+    const filteredVideos = category.videos.filter(video => 
+      video.title.toLowerCase().includes(query) || 
+      video.difficulty.toLowerCase().includes(query)
+    )
+    
+    // Return category with filtered videos if any match
+    return filteredVideos.length > 0 ? {
+      ...category,
+      videos: filteredVideos
+    } : null
+  }).filter(Boolean) // Remove null categories (those with no matching videos)
+})
+
 // Function to handle video play
 const playVideo = (videoId) => {
   console.log(`Playing video with ID: ${videoId}`)
@@ -177,6 +203,7 @@ const playVideo = (videoId) => {
           <i class="pi pi-search text-gray-400"></i>
         </span>
         <input
+          v-model="searchQuery"
           type="text"
           placeholder="Search videos..."
           class="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -199,7 +226,7 @@ const playVideo = (videoId) => {
 
     <!-- Video Categories with Grid Layout -->
     <div class="space-y-10">
-      <section v-for="category in videoCategories" :key="category.id" class="category-section">
+      <section v-for="category in filteredCategories" :key="category.id" class="category-section">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold text-gray-800">{{ category.title }}</h2>
           <button class="text-blue-600 text-sm font-medium hover:text-blue-800">
@@ -260,6 +287,15 @@ const playVideo = (videoId) => {
           </div>
         </div>
       </section>
+    </div>
+    
+    <!-- No results message -->
+    <div v-if="filteredCategories.length === 0 && searchQuery" class="text-center py-12">
+      <div class="text-gray-400 text-5xl mb-4">
+        <i class="pi pi-search"></i>
+      </div>
+      <h3 class="text-xl font-medium text-gray-700 mb-2">No videos found</h3>
+      <p class="text-gray-500 mb-4">Try adjusting your search query or filters</p>
     </div>
   </div>
 </template>
