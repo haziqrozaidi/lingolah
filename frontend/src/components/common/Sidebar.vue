@@ -32,8 +32,8 @@ const navigationSections = ref([
     title: 'Quiz',
     isOpen: false,
     items: [
-      { name: 'Settings', path: '/settings', icon: 'pi pi-cog' },
-      { name: 'Help', path: '/help', icon: 'pi pi-question-circle' },
+      { name: 'Quizes', path: '/quizes', icon: 'pi pi-file-edit' },
+      { name: 'Quiz', path: '/quiz', icon: 'pi pi-check' },
     ],
   },
   {
