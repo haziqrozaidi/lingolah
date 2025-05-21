@@ -7,9 +7,7 @@ const navigationSections = ref([
   {
     title: 'Main',
     isOpen: true,
-    items: [
-      { name: 'Dashboard', path: '/', icon: 'pi pi-home' },
-    ],
+    items: [{ name: 'Dashboard', path: '/', icon: 'pi pi-home' }],
   },
   {
     title: 'Flashcard',
@@ -40,7 +38,7 @@ const navigationSections = ref([
     title: 'Video',
     isOpen: false,
     items: [
-      { name: 'Settings', path: '/settings', icon: 'pi pi-cog' },
+      { name: 'Watch', path: '/video', icon: 'pi pi-video' },
       { name: 'Help', path: '/help', icon: 'pi pi-question-circle' },
     ],
   },
