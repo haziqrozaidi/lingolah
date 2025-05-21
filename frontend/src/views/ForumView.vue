@@ -1,9 +1,6 @@
 <template>
     <div
-        class="forum-container min-h-[calc(100vh-72px)] bg-gray-50 grid grid-cols-1 lg:grid-cols-[80px_240px_1fr_300px] gap-0">
-        <div class="border-r border-gray-200">
-            <Sidebar />
-        </div>
+        class="forum-container min-h-[calc(100vh-72px)] bg-gray-50 grid grid-cols-1 lg:grid-cols-[240px_1fr_300px] gap-0">
         <div class="sidebar-left overflow-y-auto p-4 border-r border-gray-200">
             <ForumSidebarLeft />
         </div>
