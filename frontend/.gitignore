@@ -35,8 +35,3 @@ coverage
 .env.test.local
 .env.production.local
 .env.local
-
-
-.env.example
-package-lock.json
-package.json
