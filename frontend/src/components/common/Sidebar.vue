@@ -1,6 +1,9 @@
 <script setup>
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { UserButton, useUser } from '@clerk/vue'
+
+const { user, isLoaded, isSignedIn } = useUser()
 
 // Navigation sections with collapsible menus
 const navigationSections = ref([
@@ -131,13 +134,23 @@ const toggleSidebar = () => {
       </div>
     </nav>
 
-    <!-- User Profile Section - unchanged -->
     <div class="p-3 border-t border-gray-200">
       <div class="flex items-center" :class="{ 'justify-center': isSidebarCollapsed }">
-        <div class="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0"></div>
-        <div class="ml-3" v-if="!isSidebarCollapsed">
-          <p class="text-sm font-medium text-gray-700">johnsmith</p>
-          <p class="text-xs text-gray-500">johnsmith@example.com</p>
+        <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+          <img
+            v-if="isLoaded && isSignedIn && user.imageUrl"
+            :src="user.imageUrl"
+            :alt="`${user.username || user.firstName || 'User'}'s avatar`"
+            class="w-full h-full object-cover"
+          />
+        </div>
+        <div class="ml-3" v-if="!isSidebarCollapsed && isLoaded && isSignedIn">
+          <p class="text-sm font-medium text-gray-700">
+            {{
+              user.username || user.firstName || user.primaryEmailAddress.emailAddress.split('@')[0]
+            }}
+          </p>
+          <p class="text-xs text-gray-500">{{ user.primaryEmailAddress?.emailAddress }}</p>
         </div>
       </div>
     </div>
