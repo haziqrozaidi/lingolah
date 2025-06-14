@@ -13,3 +13,201 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+model User {
+  id          String   @id @default(cuid()) @map("user_id")
+  clerkUserId String?  @map("clerk_user_id")
+  username    String   @unique
+  email       String   @unique
+  role        String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  flashcardSets  FlashcardSet[]
+  progress       Progress[]
+  posts          Post[]
+  likes          Like[]
+  comments       Comment[]
+  communities    CommunityMember[]
+  videoProgress  VideoProgress[]
+  videoPlaylists VideoPlaylist[]
+
+  @@map("User")
+}
+
+model FlashcardSet {
+  id          String   @id @default(cuid()) @map("set_id")
+  userId      String   @map("user_id")
+  title       String
+  description String?
+  categoryId  String   @map("category_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category   Category    @relation(fields: [categoryId], references: [id])
+  flashcards Flashcard[]
+
+  @@map("FlashcardSet")
+}
+
+model Flashcard {
+  id         String @id @default(cuid()) @map("card_id")
+  setId      String @map("set_id")
+  frontText  String @map("front_text")
+  backText   String @map("back_text")
+  difficulty String
+
+  // Relations
+  set      FlashcardSet @relation(fields: [setId], references: [id], onDelete: Cascade)
+  progress Progress[]
+
+  @@map("Flashcard")
+}
+
+model Progress {
+  id         String   @id @default(cuid()) @map("progress_id")
+  cardId     String   @map("card_id")
+  userId     String   @map("user_id")
+  lastReview DateTime @map("last_review")
+  nextReview DateTime @map("next_review")
+
+  // Relations
+  card Flashcard @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("Progress")
+}
+
+model Category {
+  id          String @id @default(cuid()) @map("category_id")
+  description String
+
+  // Relations
+  flashcardSets FlashcardSet[]
+
+  @@map("Category")
+}
+
+model Community {
+  id              String   @id @default(cuid()) @map("community_id")
+  name            String   @unique
+  establishedDate DateTime @map("established_date")
+  establishedBy   String   @map("established_by")
+  memberCount     Int      @map("member_count")
+
+  // Relations
+  members CommunityMember[]
+
+  @@map("Community")
+}
+
+model CommunityMember {
+  userId      String @map("user_id")
+  communityId String @map("community_id")
+
+  // Relations
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@id([userId, communityId])
+  @@map("CommunityMember")
+}
+
+model Post {
+  id        String   @id @default(cuid()) @map("post_id")
+  title     String
+  content   String
+  category  String
+  viewCount Int      @map("view_count")
+  date      DateTime
+  userId    String   @map("user_id")
+
+  // Relations
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes    Like[]
+  comments Comment[]
+
+  @@map("Post")
+}
+
+model Like {
+  postId String @map("post_id")
+  userId String @map("user_id")
+
+  // Relations
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@map("Like")
+}
+
+model Comment {
+  postId    String   @map("post_id")
+  userId    String   @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  content   String
+
+  // Relations
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([postId, userId])
+  @@map("Comment")
+}
+
+model Video {
+  id          String   @id @default(cuid()) @map("video_id")
+  title       String
+  url         String
+  description String?
+  topic       String
+  subtitles   String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  progress  VideoProgress[]
+  playlists VideoPlaylistItems[]
+
+  @@map("Video")
+}
+
+model VideoPlaylist {
+  id        String   @id @default(cuid()) @map("playlist_id")
+  userId    String   @map("user_id")
+  title     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  videos VideoPlaylistItems[]
+
+  @@map("VideoPlaylist")
+}
+
+model VideoPlaylistItems {
+  playlistId String @map("playlist_id")
+  videoId    String @map("video_id")
+
+  // Relations
+  playlist VideoPlaylist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  video    Video         @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@id([playlistId, videoId])
+  @@map("VideoPlaylistItems")
+}
+
+model VideoProgress {
+  userId    String   @map("user_id")
+  videoId   String   @map("video_id")
+  watchDate DateTime @map("watch_date")
+
+  // Relations
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@id([userId, videoId])
+  @@map("VideoProgress")
+}
