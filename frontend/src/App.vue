@@ -1,8 +1,24 @@
 <script setup>
+import { onMounted, watch } from 'vue'
 import { RouterLink, RouterView } from 'vue-router'
-import { SignedIn, SignedOut, SignInButton, UserButton, SignIn } from '@clerk/vue'
+import { SignedIn, SignedOut, SignIn, useUser } from '@clerk/vue'
 import Sidebar from './components/common/Sidebar.vue'
 import Header from './components/common/Header.vue'
+import { useUserStore } from './stores/userStore'
+
+const userStore = useUserStore()
+const { user, isLoaded, isSignedIn } = useUser()
+
+// Watch for changes in the user's authentication state
+watch(
+  [isLoaded, isSignedIn],
+  ([newIsLoaded, newIsSignedIn]) => {
+    if (newIsLoaded && newIsSignedIn && user.value) {
+      userStore.setUserData(user.value)
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
