@@ -78,7 +78,7 @@ const modules = ref([
     description: 'Watch instructional videos by native speakers',
     icon: 'pi pi-video',
     color: 'bg-purple-500',
-    link: '/videos',
+    link: '/video',
   },
   {
     id: 'forum',
