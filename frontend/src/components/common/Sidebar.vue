@@ -2,8 +2,10 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { UserButton, useUser } from '@clerk/vue'
+import { useUserStore } from '../../stores/userStore'
 
 const { user, isLoaded, isSignedIn } = useUser()
+const userStore = useUserStore()
 
 // Navigation sections with collapsible menus
 const navigationSections = ref([
@@ -47,6 +49,23 @@ const navigationSections = ref([
   },
 ])
 
+// Admin navigation sections
+const adminNavigationSections = ref([
+  {
+    title: 'Main',
+    isOpen: true,
+    items: [{ name: 'Dashboard', path: '/', icon: 'pi pi-home' }],
+  },
+  {
+    title: 'Manage Flashcard',
+    isOpen: true,
+    items: [
+      { name: 'Flashcard Set', path: '/flashcard-set', icon: 'pi pi-folder' },
+      { name: 'Flashcard', path: '/flashcard', icon: 'pi pi-check-square' },
+    ],
+  },
+])
+
 // Toggle section collapse state
 const toggleSection = (section) => {
   section.isOpen = !section.isOpen
@@ -80,7 +99,11 @@ const toggleSidebar = () => {
 
     <!-- Navigation - unchanged section headers -->
     <nav class="flex-grow py-2 mt-2 overflow-y-auto">
-      <div v-for="(section, sIndex) in navigationSections" :key="sIndex" class="mb-2">
+      <div 
+        v-for="(section, sIndex) in userStore.role === 'admin' ? adminNavigationSections : navigationSections" 
+        :key="sIndex" 
+        class="mb-2"
+      >
         <!-- Section Header - unchanged -->
         <div
           @click="toggleSection(section)"
