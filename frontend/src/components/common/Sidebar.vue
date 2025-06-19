@@ -61,7 +61,7 @@ const adminNavigationSections = ref([
     isOpen: true,
     items: [
       { name: 'Flashcard Set', path: '/flashcard-set', icon: 'pi pi-folder' },
-      { name: 'Flashcard', path: '/flashcard', icon: 'pi pi-check-square' },
+      { name: 'Flashcard', path: '/admin/flashcard', icon: 'pi pi-check-square' },
     ],
   },
 ])
@@ -99,9 +99,11 @@ const toggleSidebar = () => {
 
     <!-- Navigation - unchanged section headers -->
     <nav class="flex-grow py-2 mt-2 overflow-y-auto">
-      <div 
-        v-for="(section, sIndex) in userStore.role === 'admin' ? adminNavigationSections : navigationSections" 
-        :key="sIndex" 
+      <div
+        v-for="(section, sIndex) in userStore.role === 'admin'
+          ? adminNavigationSections
+          : navigationSections"
+        :key="sIndex"
         class="mb-2"
       >
         <!-- Section Header - unchanged -->
