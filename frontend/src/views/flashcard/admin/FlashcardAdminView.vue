@@ -3,7 +3,8 @@
     <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between">
       <h1 class="text-2xl font-bold text-gray-900 mb-4 md:mb-0">Flashcard Management</h1>
       <button
-        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        @click="openCreateModal"
+        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -24,16 +25,45 @@
     </div>
 
     <FlashcardList />
+
+    <!-- Create Flashcard Modal -->
+    <FlashcardCreateModal
+      :isOpen="isCreateModalOpen"
+      @close="closeCreateModal"
+      @save="handleSaveFlashcard"
+    />
   </div>
 </template>
 
 <script>
 import FlashcardList from '../../../components/flashcard/FlashcardList.vue'
+import FlashcardCreateModal from '../../../components/flashcard/FlashcardCreateModal.vue'
 
 export default {
   name: 'FlashcardAdminView',
   components: {
     FlashcardList,
+    FlashcardCreateModal,
+  },
+  data() {
+    return {
+      isCreateModalOpen: false,
+    }
+  },
+  methods: {
+    openCreateModal() {
+      this.isCreateModalOpen = true
+    },
+    closeCreateModal() {
+      this.isCreateModalOpen = false
+    },
+    handleSaveFlashcard(flashcard) {
+      // This would typically save the flashcard to your backend
+      console.log('Saving flashcard:', flashcard)
+
+      // For now, just close the modal
+      this.closeCreateModal()
+    },
   },
 }
 </script>
