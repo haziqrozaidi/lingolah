@@ -8,6 +8,7 @@
         :key="flashcard.id"
         :flashcard="flashcard"
         @edit="$emit('edit', flashcard)"
+        @delete="$emit('delete', flashcard)"
       />
     </div>
 
@@ -27,6 +28,7 @@ export default {
     FlashcardItem,
     FlashcardFilter,
   },
+  emits: ['edit', 'delete'],
   data() {
     return {
       flashcards: [

@@ -24,7 +24,7 @@
       </button>
     </div>
 
-    <FlashcardList @edit="openEditModal" />
+    <FlashcardList @edit="openEditModal" @delete="openDeleteModal" />
 
     <!-- Create Flashcard Modal -->
     <FlashcardCreateModal
@@ -40,6 +40,14 @@
       @close="closeEditModal"
       @update="handleUpdateFlashcard"
     />
+
+    <!-- Delete Flashcard Modal -->
+    <FlashcardDeleteModal
+      :isOpen="isDeleteModalOpen"
+      :flashcard="selectedFlashcard"
+      @close="closeDeleteModal"
+      @delete="handleDeleteFlashcard"
+    />
   </div>
 </template>
 
@@ -47,6 +55,7 @@
 import FlashcardList from '../../../components/flashcard/FlashcardList.vue'
 import FlashcardCreateModal from '../../../components/flashcard/FlashcardCreateModal.vue'
 import FlashcardEditModal from '../../../components/flashcard/FlashcardEditModal.vue'
+import FlashcardDeleteModal from '../../../components/flashcard/FlashcardDeleteModal.vue'
 
 export default {
   name: 'FlashcardAdminView',
@@ -54,11 +63,13 @@ export default {
     FlashcardList,
     FlashcardCreateModal,
     FlashcardEditModal,
+    FlashcardDeleteModal,
   },
   data() {
     return {
       isCreateModalOpen: false,
       isEditModalOpen: false,
+      isDeleteModalOpen: false,
       selectedFlashcard: null,
     }
   },
@@ -77,6 +88,14 @@ export default {
       this.isEditModalOpen = false
       this.selectedFlashcard = null
     },
+    openDeleteModal(flashcard) {
+      this.selectedFlashcard = flashcard
+      this.isDeleteModalOpen = true
+    },
+    closeDeleteModal() {
+      this.isDeleteModalOpen = false
+      this.selectedFlashcard = null
+    },
     handleSaveFlashcard(flashcard) {
       // This would typically save the flashcard to your backend
       console.log('Saving flashcard:', flashcard)
@@ -90,6 +109,13 @@ export default {
 
       // For now, just close the modal
       this.closeEditModal()
+    },
+    handleDeleteFlashcard(flashcard) {
+      // This would typically delete the flashcard from your backend
+      console.log('Deleting flashcard:', flashcard)
+
+      // For now, just close the modal
+      this.closeDeleteModal()
     },
   },
 }

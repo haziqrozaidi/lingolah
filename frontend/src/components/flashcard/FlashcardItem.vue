@@ -31,6 +31,7 @@
         <button
           class="text-red-500 hover:text-red-700 transition duration-200"
           aria-label="Delete flashcard"
+          @click="deleteFlashcard"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -77,6 +78,9 @@ export default {
   methods: {
     editFlashcard() {
       this.$emit('edit', this.flashcard)
+    },
+    deleteFlashcard() {
+      this.$emit('delete', this.flashcard)
     },
   },
 }
