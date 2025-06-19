@@ -11,6 +11,7 @@
         <button
           class="text-blue-500 hover:text-blue-700 transition duration-200"
           aria-label="Edit flashcard"
+          @click="editFlashcard"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -71,6 +72,11 @@ export default {
     flashcard: {
       type: Object,
       required: true,
+    },
+  },
+  methods: {
+    editFlashcard() {
+      this.$emit('edit', this.flashcard)
     },
   },
 }

@@ -3,7 +3,12 @@
     <FlashcardFilter />
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      <FlashcardItem v-for="flashcard in flashcards" :key="flashcard.id" :flashcard="flashcard" />
+      <FlashcardItem
+        v-for="flashcard in flashcards"
+        :key="flashcard.id"
+        :flashcard="flashcard"
+        @edit="$emit('edit', flashcard)"
+      />
     </div>
 
     <div v-if="flashcards.length === 0" class="text-center py-8">
