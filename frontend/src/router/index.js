@@ -7,6 +7,7 @@ import QuizesView from '@/views/quiz module/QuizesView.vue'
 import QuizView from '@/views/quiz module/QuizQuestionsView.vue'
 import VideoView from '../views/video/VideoView.vue'
 import ManageFlashcard from '../views/flashcard/admin/FlashcardAdminView.vue'
+import ManageFlashcardSet from '../views/flashcard/admin/FlashcardSetAdminPage.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +51,11 @@ const router = createRouter({
       path: '/admin/flashcard',
       name: 'manage-flashcard',
       component: ManageFlashcard,
+    },
+    {
+      path: '/admin/flashcard-set',
+      name: 'manage-flashcard-set',
+      component: ManageFlashcardSet,
     },
   ],
 })

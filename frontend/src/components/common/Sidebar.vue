@@ -60,7 +60,7 @@ const adminNavigationSections = ref([
     title: 'Manage Flashcard',
     isOpen: true,
     items: [
-      { name: 'Flashcard Set', path: '/flashcard-set', icon: 'pi pi-folder' },
+      { name: 'Flashcard Set', path: '/admin/flashcard-set', icon: 'pi pi-folder' },
       { name: 'Flashcard', path: '/admin/flashcard', icon: 'pi pi-check-square' },
     ],
   },
