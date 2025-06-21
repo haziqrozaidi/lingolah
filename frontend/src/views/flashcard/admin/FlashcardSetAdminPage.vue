@@ -1,8 +1,17 @@
 <template>
   <div class="container mx-auto px-4 py-6">
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">Flashcard Sets Administration</h1>
-      <p class="text-gray-600">Manage all flashcard sets in the system</p>
+    <div class="mb-6 flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Flashcard Sets Administration</h1>
+        <p class="text-gray-600">Manage all flashcard sets in the system</p>
+      </div>
+      <!-- New Flashcard Set Button -->
+      <button
+        @click="showCreateModal = true"
+        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+      >
+        New Flashcard Set
+      </button>
     </div>
 
     <!-- Filters Section -->
@@ -38,6 +47,14 @@
       @cancel="showDeleteModal = false"
       @confirm="confirmDelete"
     />
+    
+    <!-- Create Flashcard Set Modal -->
+    <FlashcardSetCreateModal
+      :show="showCreateModal"
+      :categories="categories"
+      @close="showCreateModal = false"
+      @create="handleCreateSubmit"
+    />
   </div>
 </template>
 
@@ -46,6 +63,7 @@ import FlashcardSetFilters from '@/components/flashcard/manage-flashcard-set/Fla
 import FlashcardSetList from '@/components/flashcard/manage-flashcard-set/FlashcardSetList.vue'
 import FlashcardSetDetailModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetDetailModal.vue'
 import FlashcardSetDeleteModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetDeleteModal.vue'
+import FlashcardSetCreateModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetCreateModal.vue'
 
 export default {
   name: 'FlashcardSetAdminPage',
@@ -54,6 +72,7 @@ export default {
     FlashcardSetList,
     FlashcardSetDetailModal,
     FlashcardSetDeleteModal,
+    FlashcardSetCreateModal
   },
   data() {
     return {
@@ -64,6 +83,7 @@ export default {
       selectedSet: null,
       showDetailsModal: false,
       showDeleteModal: false,
+      showCreateModal: false
     }
   },
   computed: {
@@ -304,6 +324,23 @@ export default {
       console.log('Delete flashcard:', cardId)
       alert(`Delete card functionality would go here (UI only)`)
     },
+    handleCreateSubmit(newFlashcardSet) {
+      // In a real application, this would create a new flashcard set
+      console.log('Create flashcard set:', newFlashcardSet)
+      
+      // Generate a mock ID and add created/updated timestamps
+      const newSet = {
+        ...newFlashcardSet,
+        id: `set${this.flashcardSets.length + 1}`,
+        userId: 'user1',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        flashcards: []
+      }
+      
+      // Show confirmation
+      alert(`Flashcard set "${newSet.title}" would be created here (UI only)`)
+    }
   },
 }
 </script>
