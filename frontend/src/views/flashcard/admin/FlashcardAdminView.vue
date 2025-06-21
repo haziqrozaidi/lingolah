@@ -52,10 +52,10 @@
 </template>
 
 <script>
-import FlashcardList from '../../../components/flashcard/FlashcardList.vue'
-import FlashcardCreateModal from '../../../components/flashcard/FlashcardCreateModal.vue'
-import FlashcardEditModal from '../../../components/flashcard/FlashcardEditModal.vue'
-import FlashcardDeleteModal from '../../../components/flashcard/FlashcardDeleteModal.vue'
+import FlashcardList from '../../../components/flashcard/manage-flashcard/FlashcardList.vue'
+import FlashcardCreateModal from '../../../components/flashcard/manage-flashcard/FlashcardCreateModal.vue'
+import FlashcardEditModal from '../../../components/flashcard/manage-flashcard/FlashcardEditModal.vue'
+import FlashcardDeleteModal from '../../../components/flashcard/manage-flashcard/FlashcardDeleteModal.vue'
 
 export default {
   name: 'FlashcardAdminView',

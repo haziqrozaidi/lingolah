@@ -222,7 +222,7 @@
 </template>
 
 <script>
-import FlashcardEditModal from '@/components/flashcard/FlashcardEditModal.vue'
+import FlashcardEditModal from '@/components/flashcard/manage-flashcard/FlashcardEditModal.vue'
 
 export default {
   name: 'FlashcardSetEditModal',
