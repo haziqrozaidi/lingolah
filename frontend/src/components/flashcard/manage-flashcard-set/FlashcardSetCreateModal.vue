@@ -101,52 +101,52 @@ export default {
   props: {
     show: {
       type: Boolean,
-      default: false
+      default: false,
     },
     categories: {
       type: Array,
-      required: true
-    }
+      required: true,
+    },
   },
   data() {
     return {
       flashcardSet: {
         title: '',
         description: '',
-        categoryId: ''
-      }
+        categoryId: '',
+      },
     }
   },
   methods: {
     closeModal() {
       // Reset form data
-      this.resetForm();
+      this.resetForm()
       // Emit close event
-      this.$emit('close');
+      this.$emit('close')
     },
     handleSubmit() {
       // Emit create event with form data
-      this.$emit('create', { ...this.flashcardSet });
+      this.$emit('create', { ...this.flashcardSet })
       // Reset form data
-      this.resetForm();
+      this.resetForm()
       // Close modal
-      this.$emit('close');
+      this.$emit('close')
     },
     resetForm() {
       this.flashcardSet = {
         title: '',
         description: '',
-        categoryId: ''
-      };
-    }
+        categoryId: '',
+      }
+    },
   },
   watch: {
     show(newValue) {
       // Reset form when modal is opened
       if (newValue) {
-        this.resetForm();
+        this.resetForm()
       }
-    }
-  }
+    },
+  },
 }
 </script>

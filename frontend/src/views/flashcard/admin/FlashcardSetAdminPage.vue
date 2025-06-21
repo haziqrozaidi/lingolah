@@ -47,13 +47,22 @@
       @cancel="showDeleteModal = false"
       @confirm="confirmDelete"
     />
-    
+
     <!-- Create Flashcard Set Modal -->
     <FlashcardSetCreateModal
       :show="showCreateModal"
       :categories="categories"
       @close="showCreateModal = false"
       @create="handleCreateSubmit"
+    />
+
+    <!-- NEW: Edit Flashcard Set Modal -->
+    <FlashcardSetEditModal
+      :show="showEditModal"
+      :selectedSet="selectedSet"
+      :categories="categories"
+      @close="showEditModal = false"
+      @save="handleEditSubmit"
     />
   </div>
 </template>
@@ -64,6 +73,7 @@ import FlashcardSetList from '@/components/flashcard/manage-flashcard-set/Flashc
 import FlashcardSetDetailModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetDetailModal.vue'
 import FlashcardSetDeleteModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetDeleteModal.vue'
 import FlashcardSetCreateModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetCreateModal.vue'
+import FlashcardSetEditModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetEditModal.vue'
 
 export default {
   name: 'FlashcardSetAdminPage',
@@ -72,7 +82,8 @@ export default {
     FlashcardSetList,
     FlashcardSetDetailModal,
     FlashcardSetDeleteModal,
-    FlashcardSetCreateModal
+    FlashcardSetCreateModal,
+    FlashcardSetEditModal,
   },
   data() {
     return {
@@ -83,7 +94,8 @@ export default {
       selectedSet: null,
       showDetailsModal: false,
       showDeleteModal: false,
-      showCreateModal: false
+      showCreateModal: false,
+      showEditModal: false,
     }
   },
   computed: {
@@ -305,9 +317,9 @@ export default {
       this.showDetailsModal = true
     },
     openEditModal(set) {
-      // In a real application, this would navigate to edit page or open edit modal
-      console.log('Edit flashcard set:', set)
-      alert(`Edit functionality for "${set.title}" would go here (UI only)`)
+      // Set the selected set and show the edit modal
+      this.selectedSet = set
+      this.showEditModal = true
     },
     openDeleteConfirm(set) {
       this.selectedSet = set
@@ -327,7 +339,7 @@ export default {
     handleCreateSubmit(newFlashcardSet) {
       // In a real application, this would create a new flashcard set
       console.log('Create flashcard set:', newFlashcardSet)
-      
+
       // Generate a mock ID and add created/updated timestamps
       const newSet = {
         ...newFlashcardSet,
@@ -335,12 +347,29 @@ export default {
         userId: 'user1',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        flashcards: []
+        flashcards: [],
       }
-      
+
       // Show confirmation
       alert(`Flashcard set "${newSet.title}" would be created here (UI only)`)
-    }
+      this.showCreateModal = false
+    },
+    handleEditSubmit(updatedFlashcardSet) {
+      // In a real application, this would update the flashcard set in the database
+      console.log('Update flashcard set:', updatedFlashcardSet)
+
+      // Update the timestamp
+      updatedFlashcardSet.updatedAt = new Date().toISOString()
+
+      // Update the local copy (simulate database update)
+      const index = this.flashcardSets.findIndex((set) => set.id === updatedFlashcardSet.id)
+      if (index !== -1) {
+        // Replace the set with the updated version
+        this.$set(this.flashcardSets, index, updatedFlashcardSet)
+      }
+
+      this.showEditModal = false
+    },
   },
 }
 </script>
