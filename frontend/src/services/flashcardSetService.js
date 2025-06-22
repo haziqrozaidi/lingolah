@@ -64,7 +64,7 @@ export const FlashcardSetService = {
       throw error
     }
   },
-  
+
   /**
    * Create a new flashcard set
    */
@@ -77,15 +77,40 @@ export const FlashcardSetService = {
         },
         body: JSON.stringify(flashcardSetData),
       })
-      
+
       if (!response.ok) {
         const errorData = await response.json()
         throw new Error(errorData.error || `HTTP error! Status: ${response.status}`)
       }
-      
+
       return await response.json()
     } catch (error) {
       console.error('Error creating flashcard set:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Update an existing flashcard set
+   */
+  updateFlashcardSet: async (id, flashcardSetData) => {
+    try {
+      const response = await fetch(`${API_URL}/flashcard-sets/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(flashcardSetData),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || `HTTP error! Status: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error(`Error updating flashcard set ${id}:`, error)
       throw error
     }
   },

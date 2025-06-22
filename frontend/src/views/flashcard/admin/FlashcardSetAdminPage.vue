@@ -236,22 +236,22 @@ export default {
         if (!this.userStore.isUserLoaded || !this.userStore.userId) {
           throw new Error('You must be logged in to create flashcard sets')
         }
-        
+
         // Show loading or disable the form
         this.isLoading = true
-        
+
         // Add the user ID to the flashcard set data from the user store
         const flashcardSetToCreate = {
           ...newFlashcardSet,
-          userId: this.userStore.userId
+          userId: this.userStore.userId,
         }
-        
+
         // Call the API to create the flashcard set
         const createdSet = await FlashcardSetService.createFlashcardSet(flashcardSetToCreate)
-        
+
         // Add the newly created set to the list
         this.flashcardSets = [createdSet, ...this.flashcardSets]
-        
+
         // Close the modal
         this.showCreateModal = false
       } catch (error) {
@@ -261,21 +261,33 @@ export default {
         this.isLoading = false
       }
     },
-    handleEditSubmit(updatedFlashcardSet) {
-      // In a real application, this would update the flashcard set in the database
-      console.log('Update flashcard set:', updatedFlashcardSet)
+    async handleEditSubmit(updatedFlashcardSet) {
+      try {
+        // Show loading indicator
+        this.isLoading = true
 
-      // Update the timestamp
-      updatedFlashcardSet.updatedAt = new Date().toISOString()
+        // Call the API to update the flashcard set
+        const result = await FlashcardSetService.updateFlashcardSet(updatedFlashcardSet.id, {
+          title: updatedFlashcardSet.title,
+          description: updatedFlashcardSet.description,
+          categoryId: updatedFlashcardSet.categoryId,
+        })
 
-      // Update the local copy (simulate database update)
-      const index = this.flashcardSets.findIndex((set) => set.id === updatedFlashcardSet.id)
-      if (index !== -1) {
-        // Replace the set with the updated version
-        this.$set(this.flashcardSets, index, updatedFlashcardSet)
+        // Update the local copy with the returned data from the server
+        const index = this.flashcardSets.findIndex((set) => set.id === result.id)
+        if (index !== -1) {
+          // Replace the set with the updated version
+          this.flashcardSets.splice(index, 1, result)
+        }
+
+        // Close the modal
+        this.showEditModal = false
+      } catch (error) {
+        console.error('Error updating flashcard set:', error)
+        alert(`Failed to update flashcard set: ${error.message}`)
+      } finally {
+        this.isLoading = false
       }
-
-      this.showEditModal = false
     },
   },
 }
