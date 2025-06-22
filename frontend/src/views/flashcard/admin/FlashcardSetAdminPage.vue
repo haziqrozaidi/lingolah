@@ -219,11 +219,27 @@ export default {
       this.selectedSet = set
       this.showDeleteModal = true
     },
-    confirmDelete() {
-      // In a real application, this would delete the set from the database
-      console.log('Delete flashcard set:', this.selectedSet)
-      this.showDeleteModal = false
-      alert(`Delete functionality for "${this.selectedSet.title}" would go here (UI only)`)
+    async confirmDelete() {
+      try {
+        // Show loading indicator
+        this.isLoading = true
+
+        // Call the API to delete the flashcard set
+        await FlashcardSetService.deleteFlashcardSet(this.selectedSet.id)
+
+        // Remove the deleted set from the local array
+        this.flashcardSets = this.flashcardSets.filter((set) => set.id !== this.selectedSet.id)
+
+        // Close the modal
+        this.showDeleteModal = false
+
+        // Success notification could be added here
+      } catch (error) {
+        console.error('Error deleting flashcard set:', error)
+        alert(`Failed to delete flashcard set: ${error.message}`)
+      } finally {
+        this.isLoading = false
+      }
     },
     deleteCard(cardId) {
       // In a real application, this would delete the card from the database
