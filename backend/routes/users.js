@@ -80,5 +80,11 @@ router.post('/sync', async function(req, res, next) {
     });
   }
 });
-
+// Express route
+router.get("/by-clerk-id/:clerkUserId", async (req, res) => {
+  const { clerkUserId } = req.params;
+  const user = await prisma.user.findFirst({ where: { clerkUserId } });
+  if (!user) return res.status(404).json({ error: "User not found" });
+  res.status(200).json({ id: user.id, username: user.username });
+});
 module.exports = router;

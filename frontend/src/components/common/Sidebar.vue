@@ -27,7 +27,6 @@ const navigationSections = ref([
     isOpen: false,
     items: [
       { name: 'Community', path: '/forum', icon: 'pi pi-users' },
-      { name: 'Reports', path: '/admin/forum', icon: 'pi pi-chart-bar' },
       { name: 'Documents', path: '/documents', icon: 'pi pi-file' },
     ],
   },
@@ -62,6 +61,13 @@ const adminNavigationSections = ref([
     items: [
       { name: 'Flashcard Set', path: '/admin/flashcard-set', icon: 'pi pi-folder' },
       { name: 'Flashcard', path: '/admin/flashcard', icon: 'pi pi-check-square' },
+    ],
+  },
+  {
+    title: 'Manage Forum',
+    isOpen: false,
+    items: [
+      { name: 'Reports', path: '/admin/forum', icon: 'pi pi-chart-bar' },
     ],
   },
 ])

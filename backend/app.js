@@ -8,12 +8,9 @@ var cors = require('cors');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-<<<<<<< HEAD
 var forumRouter = require('./routes/forum');
 var adminForumRouter = require('./routes/adminForum');
-=======
 var flashcardSetsRouter = require('./routes/flashcardSets');
->>>>>>> refs/remotes/origin/main
 
 var app = express();
 
@@ -29,8 +26,6 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/api/forum', forumRouter);
 app.use('/api/admin/forum', adminForumRouter);
-=======
 app.use('/flashcard-sets', flashcardSetsRouter);
->>>>>>> refs/remotes/origin/main
 
 module.exports = app;
