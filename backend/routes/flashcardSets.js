@@ -205,4 +205,31 @@ router.put('/:id', async (req, res) => {
   }
 });
 
+/**
+ * DELETE /flashcard-sets/:id
+ * Deletes a flashcard set and its associated flashcards
+ */
+router.delete('/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const deleteResult = await flashcardSetController.deleteFlashcardSet(id);
+    res.json(deleteResult);
+  } catch (error) {
+    console.error('Error deleting flashcard set:', error);
+
+    if (error.message.includes('not found')) {
+      return res.status(404).json({
+        error: 'Flashcard set not found',
+        details: error.message
+      });
+    }
+
+    res.status(500).json({
+      error: 'Failed to delete flashcard set',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;

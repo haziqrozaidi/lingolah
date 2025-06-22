@@ -198,6 +198,38 @@ exports.updateFlashcardSet = async (id, setData) => {
 };
 
 /**
+ * Delete an existing flashcard set and its associated flashcards
+ * The cascading delete is handled by the Prisma schema's onDelete setting
+ */
+exports.deleteFlashcardSet = async (id) => {
+  try {
+    // Check if the flashcard set exists before attempting to delete
+    const existingSet = await prisma.flashcardSet.findUnique({
+      where: { id },
+      include: { flashcards: true }
+    });
+
+    if (!existingSet) {
+      throw new Error(`Flashcard set with ID ${id} not found`);
+    }
+
+    // Delete the flashcard set (flashcards will be deleted automatically due to onDelete: Cascade)
+    await prisma.flashcardSet.delete({
+      where: { id }
+    });
+
+    // Return the deleted set information
+    return {
+      id,
+      message: `Flashcard set with ID ${id} and ${existingSet.flashcards.length} associated flashcards were successfully deleted`
+    };
+  } catch (error) {
+    console.error('Error in deleteFlashcardSet:', error);
+    throw error;
+  }
+};
+
+/**
  * Helper function to format flashcard set data
  */
 function formatFlashcardSet(set) {
