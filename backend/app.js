@@ -9,6 +9,7 @@ var cors = require('cors');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var flashcardSetsRouter = require('./routes/flashcardSets');
+const flashcardRoutes = require('./routes/flashcards');
 
 var app = express();
 
@@ -23,5 +24,6 @@ app.use(cors());
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/flashcard-sets', flashcardSetsRouter);
+app.use('/flashcards', flashcardRoutes);
 
 module.exports = app;
