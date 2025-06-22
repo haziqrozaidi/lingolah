@@ -105,6 +105,56 @@ exports.getAllCategories = async () => {
 };
 
 /**
+ * Find user by Clerk ID
+ */
+exports.findUserByClerkId = async (clerkUserId) => {
+  try {
+    return await prisma.user.findFirst({
+      where: {
+        clerkUserId: clerkUserId
+      }
+    });
+  } catch (error) {
+    console.error('Error in findUserByClerkId:', error);
+    throw error;
+  }
+};
+
+/**
+ * Create a new flashcard set
+ * By default, a new flashcard set contains no flashcards
+ */
+exports.createFlashcardSet = async (setData) => {
+  try {
+    // Create the flashcard set
+    const newSet = await prisma.flashcardSet.create({
+      data: {
+        title: setData.title,
+        description: setData.description,
+        userId: setData.userId,
+        categoryId: setData.categoryId,
+        // Timestamps are handled automatically by Prisma
+      },
+      include: {
+        category: true,
+        user: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        flashcards: true // Include empty flashcards array
+      }
+    });
+    
+    return formatFlashcardSet(newSet);
+  } catch (error) {
+    console.error('Error in createFlashcardSet:', error);
+    throw error;
+  }
+};
+
+/**
  * Helper function to format flashcard set data
  */
 function formatFlashcardSet(set) {

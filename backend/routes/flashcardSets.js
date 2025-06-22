@@ -79,4 +79,74 @@ router.get('/categories/all', async (req, res) => {
   }
 });
 
+/**
+ * POST /flashcard-sets
+ * Creates a new empty flashcard set
+ */
+router.post('/', async (req, res) => {
+  try {
+    const { title, description, categoryId, userId: clerkUserId } = req.body;
+    
+    if (!title) {
+      return res.status(400).json({
+        error: 'Missing required field',
+        details: 'Title is required'
+      });
+    }
+    
+    if (!categoryId) {
+      return res.status(400).json({
+        error: 'Missing required field',
+        details: 'Category ID is required'
+      });
+    }
+    
+    if (!clerkUserId) {
+      return res.status(400).json({
+        error: 'Missing required field',
+        details: 'User ID is required'
+      });
+    }
+    
+    const user = await flashcardSetController.findUserByClerkId(clerkUserId);
+    
+    if (!user) {
+      return res.status(400).json({
+        error: 'User not found',
+        details: 'No user found with the provided ID'
+      });
+    }
+    
+    const newFlashcardSet = await flashcardSetController.createFlashcardSet({
+      title,
+      description,
+      categoryId,
+      userId: user.id
+    });
+    
+    res.status(201).json(newFlashcardSet);
+  } catch (error) {
+    console.error('Error creating flashcard set:', error);
+    
+    if (error.code === 'P2003') {
+      return res.status(400).json({
+        error: 'Invalid reference',
+        details: 'The category ID or user ID provided does not exist'
+      });
+    }
+    
+    if (error.code === 'P2002') {
+      return res.status(400).json({
+        error: 'Duplicate entry',
+        details: 'A flashcard set with this title may already exist'
+      });
+    }
+    
+    res.status(500).json({
+      error: 'Failed to create flashcard set',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;
