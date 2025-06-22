@@ -155,6 +155,49 @@ exports.createFlashcardSet = async (setData) => {
 };
 
 /**
+ * Update an existing flashcard set
+ * Updates the title, description, and categoryId for a given flashcard set
+ */
+exports.updateFlashcardSet = async (id, setData) => {
+  try {
+    // Find the flashcard set to ensure it exists
+    const existingSet = await prisma.flashcardSet.findUnique({
+      where: { id },
+    });
+
+    if (!existingSet) {
+      throw new Error(`Flashcard set with ID ${id} not found`);
+    }
+
+    // Update the flashcard set
+    const updatedSet = await prisma.flashcardSet.update({
+      where: { id },
+      data: {
+        title: setData.title,
+        description: setData.description,
+        categoryId: setData.categoryId,
+        // updatedAt is handled automatically by Prisma's @updatedAt
+      },
+      include: {
+        category: true,
+        user: {
+          select: {
+            id: true,
+            username: true
+          }
+        },
+        flashcards: true
+      }
+    });
+    
+    return formatFlashcardSet(updatedSet);
+  } catch (error) {
+    console.error('Error in updateFlashcardSet:', error);
+    throw error;
+  }
+};
+
+/**
  * Helper function to format flashcard set data
  */
 function formatFlashcardSet(set) {

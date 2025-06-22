@@ -149,4 +149,60 @@ router.post('/', async (req, res) => {
   }
 });
 
+/**
+ * PUT /flashcard-sets/:id
+ * Updates an existing flashcard set
+ */
+router.put('/:id', async (req, res) => {
+  const { id } = req.params;
+  const { title, description, categoryId } = req.body;
+  
+  try {
+    // Validation
+    if (!title) {
+      return res.status(400).json({
+        error: 'Missing required field',
+        details: 'Title is required'
+      });
+    }
+    
+    if (!categoryId) {
+      return res.status(400).json({
+        error: 'Missing required field',
+        details: 'Category ID is required'
+      });
+    }
+    
+    // Update the flashcard set
+    const updatedFlashcardSet = await flashcardSetController.updateFlashcardSet(id, {
+      title,
+      description,
+      categoryId
+    });
+    
+    res.json(updatedFlashcardSet);
+  } catch (error) {
+    console.error('Error updating flashcard set:', error);
+    
+    if (error.message.includes('not found')) {
+      return res.status(404).json({
+        error: 'Flashcard set not found',
+        details: error.message
+      });
+    }
+    
+    if (error.code === 'P2003') {
+      return res.status(400).json({
+        error: 'Invalid reference',
+        details: 'The category ID provided does not exist'
+      });
+    }
+    
+    res.status(500).json({
+      error: 'Failed to update flashcard set',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;
