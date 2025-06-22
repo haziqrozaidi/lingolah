@@ -8,6 +8,8 @@ var cors = require('cors');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var forumRouter = require('./routes/forum');
+var adminForumRouter = require('./routes/adminForum');
 
 var app = express();
 
@@ -21,5 +23,7 @@ app.use(cors());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/api/forum', forumRouter);
+app.use('/api/admin/forum', adminForumRouter);
 
 module.exports = app;
