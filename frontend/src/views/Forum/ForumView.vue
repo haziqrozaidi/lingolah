@@ -14,9 +14,9 @@
 </template>
 
 <script>
-import ForumSidebarLeft from '../components/Forum/ForumSidebarLeft.vue';
-import ForumMainContent from '../components/Forum/ForumMainContent.vue';
-import ForumSidebarRight from '../components/Forum/ForumSidebarRight.vue';
+import ForumSidebarLeft from '@/components/Forum/ForumSidebarLeft.vue';
+import ForumMainContent from '@/components/Forum/ForumMainContent.vue';
+import ForumSidebarRight from '@/components/Forum/ForumSidebarRight.vue';
 
 export default {
     components: {
