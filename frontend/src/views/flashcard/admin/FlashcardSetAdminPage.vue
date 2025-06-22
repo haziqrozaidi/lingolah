@@ -110,6 +110,7 @@ import FlashcardSetDeleteModal from '@/components/flashcard/manage-flashcard-set
 import FlashcardSetCreateModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetCreateModal.vue'
 import FlashcardSetEditModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetEditModal.vue'
 import { FlashcardSetService } from '@/services/flashcardSetService'
+import { useUserStore } from '@/stores/userStore'
 
 export default {
   name: 'FlashcardSetAdminPage',
@@ -156,6 +157,10 @@ export default {
       }
 
       return filtered
+    },
+    // Get user store
+    userStore() {
+      return useUserStore()
     },
   },
   created() {
@@ -225,23 +230,36 @@ export default {
       console.log('Delete flashcard:', cardId)
       alert(`Delete card functionality would go here (UI only)`)
     },
-    handleCreateSubmit(newFlashcardSet) {
-      // In a real application, this would create a new flashcard set
-      console.log('Create flashcard set:', newFlashcardSet)
-
-      // Generate a mock ID and add created/updated timestamps
-      const newSet = {
-        ...newFlashcardSet,
-        id: `set${this.flashcardSets.length + 1}`,
-        userId: 'user1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        flashcards: [],
+    async handleCreateSubmit(newFlashcardSet) {
+      try {
+        // Check if user is logged in
+        if (!this.userStore.isUserLoaded || !this.userStore.userId) {
+          throw new Error('You must be logged in to create flashcard sets')
+        }
+        
+        // Show loading or disable the form
+        this.isLoading = true
+        
+        // Add the user ID to the flashcard set data from the user store
+        const flashcardSetToCreate = {
+          ...newFlashcardSet,
+          userId: this.userStore.userId
+        }
+        
+        // Call the API to create the flashcard set
+        const createdSet = await FlashcardSetService.createFlashcardSet(flashcardSetToCreate)
+        
+        // Add the newly created set to the list
+        this.flashcardSets = [createdSet, ...this.flashcardSets]
+        
+        // Close the modal
+        this.showCreateModal = false
+      } catch (error) {
+        console.error('Error creating flashcard set:', error)
+        alert(`Failed to create flashcard set: ${error.message}`)
+      } finally {
+        this.isLoading = false
       }
-
-      // Show confirmation
-      alert(`Flashcard set "${newSet.title}" would be created here (UI only)`)
-      this.showCreateModal = false
     },
     handleEditSubmit(updatedFlashcardSet) {
       // In a real application, this would update the flashcard set in the database
