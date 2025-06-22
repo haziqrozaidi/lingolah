@@ -21,8 +21,43 @@
       @category-change="handleCategoryChange"
     />
 
+    <!-- Loading State -->
+    <div v-if="isLoading" class="flex justify-center items-center py-12">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      <span class="ml-3 text-gray-600">Loading flashcard sets...</span>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg
+            class="h-5 w-5 text-red-500"
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 20 20"
+            fill="currentColor"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm text-red-700">
+            {{ error }}
+          </p>
+          <button @click="loadData" class="mt-2 text-sm text-red-700 underline hover:text-red-900">
+            Try again
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Flashcard Sets List -->
     <FlashcardSetList
+      v-else
       :flashcardSets="filteredFlashcardSets"
       :categories="categories"
       :hasFilters="!!searchQuery || !!categoryFilter"
@@ -74,6 +109,8 @@ import FlashcardSetDetailModal from '@/components/flashcard/manage-flashcard-set
 import FlashcardSetDeleteModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetDeleteModal.vue'
 import FlashcardSetCreateModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetCreateModal.vue'
 import FlashcardSetEditModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetEditModal.vue'
+import { FlashcardSetService } from '@/services/flashcardSetService'
+import { useUserStore } from '@/stores/userStore'
 
 export default {
   name: 'FlashcardSetAdminPage',
@@ -96,6 +133,8 @@ export default {
       showDeleteModal: false,
       showCreateModal: false,
       showEditModal: false,
+      isLoading: false,
+      error: null,
     }
   },
   computed: {
@@ -119,186 +158,41 @@ export default {
 
       return filtered
     },
+    // Get user store
+    userStore() {
+      return useUserStore()
+    },
   },
   created() {
-    // Load mock data when component is created
-    this.loadMockData()
+    // Load data from backend when component is created
+    this.loadData()
   },
   methods: {
+    async loadData() {
+      this.isLoading = true
+      this.error = null
+
+      try {
+        // Load flashcard sets and categories from the backend
+        const [flashcardSets, categories] = await Promise.all([
+          FlashcardSetService.getAllFlashcardSets(),
+          FlashcardSetService.getAllCategories(),
+        ])
+
+        this.flashcardSets = flashcardSets
+        this.categories = categories
+      } catch (error) {
+        console.error('Error loading data:', error)
+        this.error = 'Failed to load flashcard sets. Please try again later.'
+      } finally {
+        this.isLoading = false
+      }
+    },
     handleSearchChange(query) {
       this.searchQuery = query
     },
     handleCategoryChange(categoryId) {
       this.categoryFilter = categoryId
-    },
-    loadMockData() {
-      // Mock categories
-      this.categories = [
-        { id: 'cat1', description: 'Web Development' },
-        { id: 'cat2', description: 'Programming Languages' },
-        { id: 'cat3', description: 'Science' },
-        { id: 'cat4', description: 'Mathematics' },
-        { id: 'cat5', description: 'Languages' },
-      ]
-
-      // Mock flashcard sets
-      this.flashcardSets = [
-        {
-          id: 'set1',
-          userId: 'user1',
-          title: 'JavaScript Fundamentals',
-          description: 'Essential concepts and fundamentals of JavaScript programming language.',
-          categoryId: 'cat1',
-          createdAt: '2025-05-15T14:30:00Z',
-          updatedAt: '2025-06-10T09:15:00Z',
-          flashcards: [
-            {
-              id: 'card1',
-              setId: 'set1',
-              frontText: 'What is a closure in JavaScript?',
-              backText:
-                "A closure is a function that has access to its own scope, the outer function's scope, and the global scope.",
-              difficulty: 'Medium',
-            },
-            {
-              id: 'card2',
-              setId: 'set1',
-              frontText: 'Explain the difference between let, const, and var.',
-              backText:
-                'var is function scoped and can be redeclared. let is block scoped and can be reassigned. const is block scoped and cannot be reassigned.',
-              difficulty: 'Easy',
-            },
-            {
-              id: 'card3',
-              setId: 'set1',
-              frontText: 'What is hoisting in JavaScript?',
-              backText:
-                "Hoisting is JavaScript's behavior of moving declarations to the top of their containing scope during compilation.",
-              difficulty: 'Medium',
-            },
-          ],
-        },
-        {
-          id: 'set2',
-          userId: 'user1',
-          title: 'Vue.js Basics',
-          description: 'Introduction to Vue.js framework and its core concepts.',
-          categoryId: 'cat1',
-          createdAt: '2025-04-20T10:00:00Z',
-          updatedAt: '2025-06-18T16:45:00Z',
-          flashcards: [
-            {
-              id: 'card4',
-              setId: 'set2',
-              frontText: 'What is Vue.js?',
-              backText:
-                'Vue.js is a progressive JavaScript framework for building user interfaces.',
-              difficulty: 'Easy',
-            },
-            {
-              id: 'card5',
-              setId: 'set2',
-              frontText: 'Explain Vue directives.',
-              backText:
-                'Vue directives are special attributes with the v- prefix that apply special reactive behavior to the rendered DOM.',
-              difficulty: 'Medium',
-            },
-          ],
-        },
-        {
-          id: 'set3',
-          userId: 'user2',
-          title: 'Python Basics',
-          description: 'Fundamental concepts of Python programming language for beginners.',
-          categoryId: 'cat2',
-          createdAt: '2025-03-05T08:20:00Z',
-          updatedAt: '2025-05-22T11:30:00Z',
-          flashcards: [
-            {
-              id: 'card6',
-              setId: 'set3',
-              frontText: 'What is a list comprehension in Python?',
-              backText:
-                'List comprehension is a concise way to create lists using a single line of code.',
-              difficulty: 'Medium',
-            },
-            {
-              id: 'card7',
-              setId: 'set3',
-              frontText: 'How do you handle exceptions in Python?',
-              backText: 'Use try-except blocks to catch and handle exceptions in Python.',
-              difficulty: 'Medium',
-            },
-            {
-              id: 'card8',
-              setId: 'set3',
-              frontText: 'What are Python decorators?',
-              backText:
-                'Decorators are functions that modify the behavior of other functions or methods.',
-              difficulty: 'Hard',
-            },
-          ],
-        },
-        {
-          id: 'set4',
-          userId: 'user3',
-          title: 'Physics Laws',
-          description: 'Important laws of physics and their applications.',
-          categoryId: 'cat3',
-          createdAt: '2025-02-10T13:45:00Z',
-          updatedAt: '2025-06-05T14:20:00Z',
-          flashcards: [
-            {
-              id: 'card9',
-              setId: 'set4',
-              frontText: "Newton's First Law of Motion",
-              backText:
-                'An object at rest stays at rest, and an object in motion stays in motion with the same speed and direction unless acted upon by an unbalanced force.',
-              difficulty: 'Easy',
-            },
-            {
-              id: 'card10',
-              setId: 'set4',
-              frontText: "Newton's Second Law of Motion",
-              backText:
-                'The acceleration of an object is directly proportional to the net force acting on it and inversely proportional to its mass (F=ma).',
-              difficulty: 'Medium',
-            },
-          ],
-        },
-        {
-          id: 'set5',
-          userId: 'user2',
-          title: 'Spanish Vocabulary',
-          description: 'Common Spanish words and phrases for beginners.',
-          categoryId: 'cat5',
-          createdAt: '2025-01-15T09:30:00Z',
-          updatedAt: '2025-06-01T10:15:00Z',
-          flashcards: [
-            {
-              id: 'card11',
-              setId: 'set5',
-              frontText: 'Hola',
-              backText: 'Hello',
-              difficulty: 'Easy',
-            },
-            {
-              id: 'card12',
-              setId: 'set5',
-              frontText: 'Gracias',
-              backText: 'Thank you',
-              difficulty: 'Easy',
-            },
-            {
-              id: 'card13',
-              setId: 'set5',
-              frontText: 'Por favor',
-              backText: 'Please',
-              difficulty: 'Easy',
-            },
-          ],
-        },
-      ]
     },
     formatDate(dateString) {
       const date = new Date(dateString)
@@ -325,50 +219,91 @@ export default {
       this.selectedSet = set
       this.showDeleteModal = true
     },
-    confirmDelete() {
-      // In a real application, this would delete the set from the database
-      console.log('Delete flashcard set:', this.selectedSet)
-      this.showDeleteModal = false
-      alert(`Delete functionality for "${this.selectedSet.title}" would go here (UI only)`)
+    async confirmDelete() {
+      try {
+        // Show loading indicator
+        this.isLoading = true
+
+        // Call the API to delete the flashcard set
+        await FlashcardSetService.deleteFlashcardSet(this.selectedSet.id)
+
+        // Remove the deleted set from the local array
+        this.flashcardSets = this.flashcardSets.filter((set) => set.id !== this.selectedSet.id)
+
+        // Close the modal
+        this.showDeleteModal = false
+
+        // Success notification could be added here
+      } catch (error) {
+        console.error('Error deleting flashcard set:', error)
+        alert(`Failed to delete flashcard set: ${error.message}`)
+      } finally {
+        this.isLoading = false
+      }
     },
     deleteCard(cardId) {
       // In a real application, this would delete the card from the database
       console.log('Delete flashcard:', cardId)
       alert(`Delete card functionality would go here (UI only)`)
     },
-    handleCreateSubmit(newFlashcardSet) {
-      // In a real application, this would create a new flashcard set
-      console.log('Create flashcard set:', newFlashcardSet)
+    async handleCreateSubmit(newFlashcardSet) {
+      try {
+        // Check if user is logged in
+        if (!this.userStore.isUserLoaded || !this.userStore.userId) {
+          throw new Error('You must be logged in to create flashcard sets')
+        }
 
-      // Generate a mock ID and add created/updated timestamps
-      const newSet = {
-        ...newFlashcardSet,
-        id: `set${this.flashcardSets.length + 1}`,
-        userId: 'user1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        flashcards: [],
+        // Show loading or disable the form
+        this.isLoading = true
+
+        // Add the user ID to the flashcard set data from the user store
+        const flashcardSetToCreate = {
+          ...newFlashcardSet,
+          userId: this.userStore.userId,
+        }
+
+        // Call the API to create the flashcard set
+        const createdSet = await FlashcardSetService.createFlashcardSet(flashcardSetToCreate)
+
+        // Add the newly created set to the list
+        this.flashcardSets = [createdSet, ...this.flashcardSets]
+
+        // Close the modal
+        this.showCreateModal = false
+      } catch (error) {
+        console.error('Error creating flashcard set:', error)
+        alert(`Failed to create flashcard set: ${error.message}`)
+      } finally {
+        this.isLoading = false
       }
-
-      // Show confirmation
-      alert(`Flashcard set "${newSet.title}" would be created here (UI only)`)
-      this.showCreateModal = false
     },
-    handleEditSubmit(updatedFlashcardSet) {
-      // In a real application, this would update the flashcard set in the database
-      console.log('Update flashcard set:', updatedFlashcardSet)
+    async handleEditSubmit(updatedFlashcardSet) {
+      try {
+        // Show loading indicator
+        this.isLoading = true
 
-      // Update the timestamp
-      updatedFlashcardSet.updatedAt = new Date().toISOString()
+        // Call the API to update the flashcard set
+        const result = await FlashcardSetService.updateFlashcardSet(updatedFlashcardSet.id, {
+          title: updatedFlashcardSet.title,
+          description: updatedFlashcardSet.description,
+          categoryId: updatedFlashcardSet.categoryId,
+        })
 
-      // Update the local copy (simulate database update)
-      const index = this.flashcardSets.findIndex((set) => set.id === updatedFlashcardSet.id)
-      if (index !== -1) {
-        // Replace the set with the updated version
-        this.$set(this.flashcardSets, index, updatedFlashcardSet)
+        // Update the local copy with the returned data from the server
+        const index = this.flashcardSets.findIndex((set) => set.id === result.id)
+        if (index !== -1) {
+          // Replace the set with the updated version
+          this.flashcardSets.splice(index, 1, result)
+        }
+
+        // Close the modal
+        this.showEditModal = false
+      } catch (error) {
+        console.error('Error updating flashcard set:', error)
+        alert(`Failed to update flashcard set: ${error.message}`)
+      } finally {
+        this.isLoading = false
       }
-
-      this.showEditModal = false
     },
   },
 }
