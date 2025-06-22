@@ -2,7 +2,8 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LearnView from '../views/flashcard/LearnView.vue'
 import DashboardView from '../views/DashboardView.vue'
 import ReviewView from '../views/flashcard/ReviewView.vue'
-import ForumView from '../views/ForumView.vue'
+import ForumView from '@/views/Forum/ForumView.vue'
+import AdminForumView from '@/views/Forum/AdminForumView.vue'
 import QuizesView from '@/views/quiz module/QuizesView.vue'
 import QuizView from '@/views/quiz module/QuizQuestionsView.vue'
 import VideoView from '../views/video/VideoView.vue'
@@ -31,6 +32,11 @@ const router = createRouter({
       path: '/forum',
       name: 'forum',
       component: ForumView,
+    },
+    {
+      path: '/admin/forum',
+      name: 'admin-forum',
+      component: AdminForumView,
     },
     {
       path: '/quizes',

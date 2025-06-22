@@ -1,157 +1,168 @@
 <template>
-  <div class="main-content space-y-4">
-    <div class="create-post bg-white rounded-xl shadow-sm p-4 flex items-center">
-      <div class="user-avatar w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-white font-bold">
-        <span>U</span>
+  <div>
+    <!-- Create Post Form -->
+    <form
+      @submit.prevent="createPost"
+      class="bg-white border border-gray-200 rounded-xl p-4 mb-6 flex flex-col gap-3 shadow"
+    >
+      <input
+        type="text"
+        v-model="newPost.title"
+        placeholder="What's your question or topic?"
+        class="border rounded px-3 py-2 w-full text-base"
+        required
+      />
+      <textarea
+        v-model="newPost.content"
+        placeholder="Add more details..."
+        rows="3"
+        class="border rounded px-3 py-2 w-full text-base"
+        required
+      ></textarea>
+      <div class="flex gap-2">
+        <input
+          type="text"
+          v-model="newPost.category"
+          placeholder="Category (optional)"
+          class="border rounded px-3 py-2 w-full text-base"
+        />
+        <button
+          type="submit"
+          class="bg-blue-500 text-white px-6 py-2 rounded font-semibold hover:bg-blue-600 transition-colors"
+        >
+          Post
+        </button>
       </div>
-      <input type="text"
-        class="post-input flex-1 mx-4 px-4 py-2 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        placeholder="What's on your mind?">
-      <button
-        class="create-post-btn px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-full hover:bg-blue-600 transition-colors">
-        Post
-      </button>
-    </div>
+    </form>
 
-    <div v-for="post in posts" :key="post.id"
-      class="post bg-white rounded-xl shadow-sm p-5 cursor-pointer hover:shadow-md transition-shadow"
-      @click="openPost(post)">
-      <div class="post-content">
-        <h3 class="post-title text-lg font-semibold text-gray-800 mb-3 leading-snug">{{ post.title }}</h3>
-        <div class="post-meta flex items-center">
-          <div
-            class="user-avatar small w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-xs text-white font-bold">
-            <span>{{ post.author.charAt(0) }}</span>
-          </div>
-          <div class="meta-details flex-1 ml-3">
-            <div class="user-info">
-              <span class="username text-sm font-semibold">{{ post.author }}</span>
-              <span class="post-time p-2 text-xs text-gray-500 mt-0.5">{{ post.time }}</span>
-            </div>
-            <div class="post-stats flex gap-4 sm:flex-row flex-col sm:gap-4 gap-1 text-xs text-gray-500">
-              <span>{{ post.views }} views</span>
-              <span>{{ post.likes }} likes</span>
-              <span>{{ post.comments }} comments</span>
-            </div>
-          </div>
-          <button
-            class="post-actions text-gray-400 hover:text-gray-600 p-1 rounded hover:bg-gray-100 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z">
-              </path>
-            </svg>
-          </button>
+    <!-- Display Posts -->
+    <div v-for="post in posts" :key="post.id" class="forum-post bg-white rounded-xl p-4 mb-4 shadow flex flex-col sm:flex-row">
+      <div class="post-avatar flex-shrink-0 mr-4 mb-2 sm:mb-0">
+        <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center text-xl font-bold text-gray-400">
+          {{ post.user ? post.user.username[0] : '?' }}
+        </div>
+      </div>
+      <div class="post-content flex-1 flex flex-col">
+        <div class="post-header flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
+          <h2 class="post-title font-semibold text-lg text-gray-800">{{ post.title }}</h2>
+          <span class="post-time p-2 text-xs text-gray-500 mt-0.5">{{ formatDate(post.date) }}</span>
+        </div>
+        <div class="post-stats flex gap-4 sm:flex-row flex-col sm:gap-4 gap-1 text-xs text-gray-500">
+          <span>{{ post.viewCount }} views</span>
+        </div>
+        <div class="flex gap-2 mt-2">
+          <button class="btn-small" @click="openEditModal(post)">Edit</button>
+          <button class="btn-small bg-red-500 hover:bg-red-600" @click="deletePost(post.id)">Delete</button>
         </div>
       </div>
     </div>
-    <PostDetailModal v-if="selectedPost" :show="showModal" :post="selectedPost" :currentUser="currentUser"
-      @close="closeModal" @add-comment="handleNewComment" />
+
+    <!-- Edit Modal -->
+    <div v-if="showModal" class="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center">
+      <div class="bg-white rounded-xl p-6 w-full max-w-md shadow-lg">
+        <h2 class="font-bold text-lg mb-2">Edit Post</h2>
+        <form @submit.prevent="updatePost">
+          <input v-model="editPost.title" class="input mb-2" required />
+          <textarea v-model="editPost.content" class="input mb-2" required />
+          <input v-model="editPost.category" class="input mb-2" />
+          <div class="flex gap-2">
+            <button type="submit" class="btn">Save</button>
+            <button type="button" class="btn-small bg-gray-300" @click="closeEditModal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import PostDetailModal from './PostDetailModal.vue'
-
 export default {
   name: 'ForumMainContent',
-  components: {
-    PostDetailModal
-  },
   props: {
-    posts: {
-      type: Array,
-      required: true
-    }
+    // posts: { type: Array, required: false }
   },
   data() {
     return {
-      currentUser: 'johnsmith',
-      selectedPost: null,
+      posts: [],
+      newPost: { title: '', content: '', category: '' },
+      editPost: { id: '', title: '', content: '', category: '' },
       showModal: false,
-      // Add this comments data structure
-      postComments: {
-        1: [
-          {
-            id: 101,
-            author: 'MalayLanguageExpert',
-            time: '2 days ago',
-            content: '"Lah" is a particle used to make sentences more casual and friendly. It often comes at the end of sentences.',
-            likes: 24
-          },
-          {
-            id: 102,
-            author: 'LanguageLearner123',
-            time: '1 week ago',
-            content: 'I struggled with this too! My teacher said to use it when you want to soften a statement.',
-            likes: 15
-          }
-        ],
-        2: [
-          {
-            id: 201,
-            author: 'PolyglotPro',
-            time: '2 days ago',
-            content: 'Immersion is key! Try watching Malay movies with subtitles.',
-            likes: 38
-          }
-        ],
-        3: [
-          {
-            id: 301,
-            author: 'LinguisticsStudent',
-            time: '5 days ago',
-            content: 'Yes! There are many dialects. Malaysian Malay differs from Indonesian Malay.',
-            likes: 56
-          }
-        ],
-        4: [
-          {
-            id: 401,
-            author: 'HappyUser88',
-            time: '1 week ago',
-            content: 'I agree! This app helped me learn basic Malay in just 2 months.',
-            likes: 18
-          }
-        ]
-      }
+      currentUserId: 'replace-with-user-id' // TODO: Set this from auth
     }
   },
+  mounted() {
+    this.fetchPosts();
+  },
   methods: {
-    openPost(post) {
-      this.selectedPost = {
-        ...post,
-        content: this.getPostContent(post.id),
-        comments: this.postComments[post.id] || [] // Pass comments for this post
-      }
-      this.showModal = true
+    async fetchPosts() {
+      const res = await fetch('http://localhost:4000/api/forum/posts');
+      this.posts = await res.json();
     },
-    closeModal() {
-      this.showModal = false
-      this.selectedPost = null
+    async createPost() {
+      await fetch('http://localhost:4000/api/forum/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...this.newPost,
+          userId: this.currentUserId
+        })
+      });
+      this.newPost = { title: '', content: '', category: '' };
+      await this.fetchPosts();
     },
-    getPostContent(postId) {
-      const contents = {
-        1: "I've been learning Malay for a few months now, but I'm really confused about when to use 'lah' in sentences...",
-        2: "I'm just starting to learn Malay and feeling a bit overwhelmed. What methods have worked best for you all?...",
-        3: "I recently met someone from Indonesia who said they speak Malay, but it sounded quite different from what I've learned...",
-        4: "Just wanted to share how much I love this app! I've tried many language learning apps but this one really stands out..."
-      }
-      return contents[postId] || "No content available"
+    openEditModal(post) {
+      this.editPost = { ...post };
+      this.showModal = true;
     },
-    handleNewComment(newComment) {
-      if (!this.selectedPost) return
-      const postId = this.selectedPost.id
-      if (!this.postComments[postId]) {
-        this.postComments[postId] = []
-      }
-      this.postComments[postId].unshift(newComment)
-      // Update the selected post to trigger reactivity
-      this.selectedPost = {
-        ...this.selectedPost,
-        comments: [...this.postComments[postId]]
-      }
+    closeEditModal() {
+      this.showModal = false;
+      this.editPost = { id: '', title: '', content: '', category: '' };
+    },
+    async updatePost() {
+      await fetch(`http://localhost:4000/api/forum/posts/${this.editPost.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: this.editPost.title,
+          content: this.editPost.content,
+          category: this.editPost.category
+        })
+      });
+      this.closeEditModal();
+      await this.fetchPosts();
+    },
+    async deletePost(id) {
+      if (!confirm('Are you sure you want to delete this post?')) return;
+      await fetch(`http://localhost:4000/api/forum/posts/${id}`, {
+        method: 'DELETE'
+      });
+      await this.fetchPosts();
+    },
+    formatDate(date) {
+      return new Date(date).toLocaleString();
     }
   }
 }
 </script>
+
+<style scoped>
+.input {
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  width: 100%;
+}
+.btn {
+  background-color: #3b82f6;
+  color: #fff;
+  padding: 0.25rem 1rem;
+  border-radius: 0.5rem;
+}
+.btn-small {
+  background-color: #3b82f6;
+  color: #fff;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.75rem;
+}
+</style>
