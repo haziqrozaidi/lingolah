@@ -1,16 +1,18 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 
-const videos = ref([]) // Toutes les vidéos récupérées du backend
+const videos = ref([]) 
 const searchQuery = ref('')
+// Nouvel état pour suivre les catégories développées
+const expandedCategories = ref({})
 
-// Récupérer les vidéos depuis l'API au chargement
+// Fetch all videos from the API
 onMounted(async () => {
   const res = await fetch('http://localhost:3000/api/videos')
   videos.value = await res.json()
 })
 
-// Catégoriser les vidéos (par exemple par topic)
+// categorize videos by topic
 const videoCategories = computed(() => {
   const categories = {}
   videos.value.forEach(video => {
@@ -18,11 +20,11 @@ const videoCategories = computed(() => {
     if (!categories[topic]) categories[topic] = []
     categories[topic].push(video)
   })
-  // Retourne un tableau d'objets { title, videos }
+  // Returns an array of objects { title, videos }
   return Object.entries(categories).map(([title, videos]) => ({ title, videos }))
 })
 
-// Filtrer les catégories selon la recherche
+// Filter categories according to the search
 const filteredCategories = computed(() => {
   if (!searchQuery.value.trim()) return videoCategories.value
   const query = searchQuery.value.toLowerCase()
@@ -37,7 +39,22 @@ const filteredCategories = computed(() => {
     .filter(Boolean)
 })
 
-// Fonction pour jouer une vidéo (à adapter selon ton besoin)
+// Fonction pour basculer l'affichage complet d'une catégorie
+const toggleCategoryExpand = (categoryTitle) => {
+  expandedCategories.value[categoryTitle] = !expandedCategories.value[categoryTitle]
+}
+
+// Fonction pour obtenir les vidéos à afficher (limitées ou toutes)
+const getVisibleVideos = (category) => {
+  // Si la catégorie est développée ou s'il y a moins de 5 vidéos, afficher toutes les vidéos
+  if (expandedCategories.value[category.title] || category.videos.length <= 4) {
+    return category.videos
+  }
+  // Sinon, limiter à 4 vidéos
+  return category.videos.slice(0, 4)
+}
+
+// Function to play a video (adapt as needed)
 const playVideo = (videoId) => {
   console.log(`Playing video with ID: ${videoId}`)
 }
@@ -84,15 +101,21 @@ const playVideo = (videoId) => {
       <section v-for="category in filteredCategories" :key="category.title" class="category-section">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold text-gray-800">{{ category.title }}</h2>
-          <button class="text-blue-600 text-sm font-medium hover:text-blue-800">
-            View All <i class="pi pi-arrow-right ml-1"></i>
+          <!-- Bouton modifié pour basculer l'affichage -->
+          <button 
+            @click="toggleCategoryExpand(category.title)" 
+            class="text-blue-600 text-sm font-medium hover:text-blue-800"
+            v-if="category.videos.length > 4"
+          >
+            {{ expandedCategories[category.title] ? 'Show less' : 'Show more' }} 
+            <i :class="expandedCategories[category.title] ? 'pi pi-arrow-up ml-1' : 'pi pi-arrow-down ml-1'"></i>
           </button>
         </div>
 
         <!-- Grid Layout for Videos -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           <div
-            v-for="video in category.videos"
+            v-for="video in getVisibleVideos(category)"
             :key="video.id"
             class="video-card rounded-lg overflow-hidden shadow-md bg-white hover:shadow-lg transition-shadow duration-300"
           >
