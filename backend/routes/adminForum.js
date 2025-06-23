@@ -32,7 +32,7 @@ router.get("/posts/:postId/report", async (req, res) => {
 router.get("/reported/pending", requireAdmin, async (req, res) => {
   try {
     const posts = await prisma.post.findMany({
-      where: { reported: true, reportResolved: false },
+      where: { reported: true},
       include: { user: true },
       orderBy: { date: "desc" },
     });
