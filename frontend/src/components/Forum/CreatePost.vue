@@ -29,7 +29,8 @@ import { useUserStore } from "@/stores/userStore";
 export default {
   name: "CreatePost",
   props: {
-    categories: { type: Array, required: true }
+    categories: { type: Array, required: true },
+    communityId: { type: String, required: true }
   },
   data() {
     return {
@@ -39,13 +40,17 @@ export default {
   methods: {
     async submit() {
       const userStore = useUserStore();
-      // Assuming an endpoint and userId is available.
       const dbUserId = await fetch(`http://localhost:3000/users/by-clerk-id/${userStore.userId}`)
         .then(res => res.json()).then(d => d.id);
+
       await fetch('http://localhost:3000/api/forum/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...this.form, userId: dbUserId })
+        body: JSON.stringify({
+          ...this.form,
+          userId: dbUserId,
+          communityId: this.communityId         // <-- send communityId!
+        })
       });
       this.form = { title: '', content: '', category: '' };
       this.$emit('post-created');

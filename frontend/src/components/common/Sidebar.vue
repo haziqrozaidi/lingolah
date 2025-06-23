@@ -27,7 +27,6 @@ const navigationSections = ref([
     isOpen: false,
     items: [
       { name: 'Community', path: '/forum', icon: 'pi pi-users' },
-      { name: 'Documents', path: '/documents', icon: 'pi pi-file' },
     ],
   },
   {
@@ -68,6 +67,13 @@ const adminNavigationSections = ref([
     isOpen: false,
     items: [
       { name: 'Reports', path: '/admin/forum', icon: 'pi pi-chart-bar' },
+    ],
+  },
+  {
+    title: 'Manage Community',
+    isOpen: false,
+    items: [
+      { name: 'Community', path: '/admin/community', icon: 'pi pi-users' },
     ],
   },
 ])

@@ -32,27 +32,8 @@
             <h2 class="font-bold text-lg">Create Post</h2>
             <button class="text-2xl text-gray-400 hover:text-gray-600" @click="showCreate = false">&times;</button>
           </div>
-          <form @submit.prevent="createPost" class="flex flex-col gap-3">
-            <input type="text" v-model="newPost.title" placeholder="What's your question or topic?"
-              class="border rounded px-3 py-2 w-full text-base" required />
-            <textarea v-model="newPost.content" placeholder="Add more details..." rows="6"
-              class="border rounded px-3 py-2 w-full text-base" required></textarea>
-            <select v-model="newPost.category" required class="border rounded px-3 py-2 w-full text-base">
-              <option value="" disabled>Select a category</option>
-              <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-            </select>
-            <div class="flex gap-2 justify-end mt-2">
-              <button type="button"
-                class="bg-gray-200 text-gray-700 px-6 py-2 rounded font-semibold hover:bg-gray-300 transition-colors"
-                @click="showCreate = false">
-                Cancel
-              </button>
-              <button type="submit"
-                class="bg-blue-500 text-white px-6 py-2 rounded font-semibold hover:bg-blue-600 transition-colors">
-                Post
-              </button>
-            </div>
-          </form>
+          <CreatePost :categories="categories" :community-id="community.id" @post-created="handlePostCreated"
+            @cancel="showCreate = false" />
         </div>
       </div>
     </transition>
@@ -143,7 +124,6 @@
     </div>
 
     <!-- Edit Modal -->
-    <!-- Put this in your template, replace the existing edit modal div -->
     <div v-if="showModal" class="modal-mask" @click.self="closeEditModal">
       <div class="edit-modal-container">
         <h2 class="font-bold text-2xl mb-6">Edit Post</h2>
@@ -181,11 +161,16 @@
 
 <script>
 import PostDetailModal from './PostDetailModal.vue'
+import CreatePost from './CreatePost.vue'
 import { useUserStore } from "@/stores/userStore";
 export default {
   name: 'ForumMainContent',
   components: {
-    PostDetailModal
+    PostDetailModal,
+    CreatePost
+  },
+  props: {
+    community: { type: Object, required: true }
   },
   data() {
     return {
@@ -222,27 +207,32 @@ export default {
   },
   computed: {
     filteredPosts() {
-      if (this.selectedCategory === "All") return this.posts;
-      return this.posts.filter(p => p.category === this.selectedCategory);
+      // If "General" tab is selected (currentCommunity is null or 'general'), show posts without communityId
+      if (!this.community || this.community.id === 'general') {
+        return this.posts.filter(p => !p.communityId);
+      }
+      // Otherwise, show posts for the selected community
+      const posts = this.posts.filter(p => p.communityId === this.community.id);
+      if (this.selectedCategory === "All") return posts;
+      return posts.filter(p => p.category === this.selectedCategory);
     },
     currentUsername() {
       const userStore = useUserStore();
       return userStore.username || 'Current User';
     }
   },
-  async mounted() {
-    await this.fetchPosts();
-    const userStore = useUserStore();
-    // Fetch and cache user profile images for all unique post userIds
-    for (const post of this.posts) {
-      if (!this.userImages[post.userId]) {
-        const profile = await this.fetchUserProfile(post.userId);
-        if (profile && profile.imageUrl) {
-          this.userImages[post.userId] = profile.imageUrl;
-        }
+  watch: {
+    community: {
+      immediate: true,
+      handler() {
+        this.fetchPosts();
       }
     }
+  },
+  async mounted() {
+    const userStore = useUserStore();
     this.dbUserId = await this.fetchDbUserIdByClerkId(userStore.userId);
+    await this.fetchPosts();
     document.addEventListener('click', this.handleClickOutside);
   },
   beforeUnmount() {
@@ -282,11 +272,27 @@ export default {
       return data.id;
     },
     async fetchPosts() {
+      // Always fetch all posts
       const res = await fetch('http://localhost:3000/api/forum/posts');
-      this.posts = await res.json();
-      for (const post of this.posts) {
+      const allPosts = await res.json();
+      this.posts = allPosts; // Store all posts, filtering is handled in computed
+
+      // Fetch like status and comments for currently filtered posts only
+      let filtered;
+      if (!this.community || this.community.id === 'general') {
+        filtered = this.posts.filter(p => !p.communityId);
+      } else {
+        filtered = this.posts.filter(p => p.communityId === this.community.id);
+      }
+      for (const post of filtered) {
         await this.fetchLikeStatus(post.id);
         await this.fetchComments(post.id);
+        if (!this.userImages[post.userId]) {
+          const profile = await this.fetchUserProfile(post.userId);
+          if (profile && profile.imageUrl) {
+            this.userImages[post.userId] = profile.imageUrl;
+          }
+        }
       }
     },
     async createPost() {
@@ -294,12 +300,14 @@ export default {
       if (!this.dbUserId) {
         this.dbUserId = await this.fetchDbUserIdByClerkId(userStore.userId);
       }
+      // Add communityId to the payload!
       await fetch('http://localhost:3000/api/forum/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...this.newPost,
-          userId: this.dbUserId
+          userId: this.dbUserId,
+          communityId: this.community.id
         })
       });
       this.newPost = { title: '', content: '', category: '' };

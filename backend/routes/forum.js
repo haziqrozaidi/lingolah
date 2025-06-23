@@ -18,7 +18,7 @@ router.get("/posts", async (req, res) => {
 
 // Create a post
 router.post("/posts", async (req, res) => {
-  const { title, content, category, userId } = req.body;
+  const { title, content, category, userId, communityId } = req.body;
   try {
     if (!userId) {
       return res.status(400).json({ error: "Missing userId in request body" });
@@ -37,11 +37,12 @@ router.post("/posts", async (req, res) => {
         userId: user.id,
         viewCount: 0,
         date: new Date(),
+        communityId: communityId || null,
       },
     });
     res.status(201).json(post);
   } catch (err) {
-    console.error('Error creating post:', err);  // <-- Add this for debugging
+    console.error("Error creating post:", err); // <-- Add this for debugging
     res.status(500).json({ error: err.message });
   }
 });
@@ -101,13 +102,17 @@ router.get("/posts/reported", async (req, res) => {
 
 /*LIKE & COMMENT SECTION*/
 // Like or Unlike a post (toggle)
-router.post('/posts/:postId/like', async (req, res) => {
+router.post("/posts/:postId/like", async (req, res) => {
   const { postId } = req.params;
   const { userId } = req.body;
   try {
-    const existing = await prisma.like.findUnique({ where: { postId_userId: { postId, userId } } });
+    const existing = await prisma.like.findUnique({
+      where: { postId_userId: { postId, userId } },
+    });
     if (existing) {
-      await prisma.like.delete({ where: { postId_userId: { postId, userId } } });
+      await prisma.like.delete({
+        where: { postId_userId: { postId, userId } },
+      });
       return res.json({ liked: false });
     } else {
       await prisma.like.create({ data: { postId, userId } });
@@ -119,21 +124,23 @@ router.post('/posts/:postId/like', async (req, res) => {
 });
 
 // Get like count & if liked by current user
-router.get('/posts/:postId/like-status', async (req, res) => {
+router.get("/posts/:postId/like-status", async (req, res) => {
   const { postId } = req.params;
   const { userId } = req.query;
   const count = await prisma.like.count({ where: { postId } });
-  const liked = !!(await prisma.like.findUnique({ where: { postId_userId: { postId, userId } } }));
+  const liked = !!(await prisma.like.findUnique({
+    where: { postId_userId: { postId, userId } },
+  }));
   res.json({ count, liked });
 });
 
 // Add comment to post (multiple comments per user/post allowed)
-router.post('/posts/:postId/comments', async (req, res) => {
+router.post("/posts/:postId/comments", async (req, res) => {
   const { postId } = req.params;
   const { userId, content } = req.body;
   try {
     const comment = await prisma.comment.create({
-      data: { postId, userId, content }
+      data: { postId, userId, content },
     });
     res.json(comment);
   } catch (error) {
@@ -142,12 +149,12 @@ router.post('/posts/:postId/comments', async (req, res) => {
 });
 
 // Get all comments for a post
-router.get('/posts/:postId/comments', async (req, res) => {
+router.get("/posts/:postId/comments", async (req, res) => {
   const { postId } = req.params;
   const comments = await prisma.comment.findMany({
     where: { postId },
     include: { user: true },
-    orderBy: { createdAt: 'asc' }
+    orderBy: { createdAt: "asc" },
   });
   res.json(comments);
 });
@@ -158,7 +165,7 @@ router.post("/posts/:id/view", async (req, res) => {
   try {
     await prisma.post.update({
       where: { id },
-      data: { viewCount: { increment: 1 } }
+      data: { viewCount: { increment: 1 } },
     });
     res.json({ success: true });
   } catch (err) {
