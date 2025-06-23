@@ -113,7 +113,6 @@
                                                 comment.time) }}</span>
                                         </div>
                                         <p class="text-sm">{{ comment.content }}</p>
-                                        <!-- Like and reply actions could be implemented per comment here -->
                                     </div>
                                 </div>
                             </div>

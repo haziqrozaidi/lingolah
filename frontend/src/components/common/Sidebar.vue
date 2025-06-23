@@ -74,6 +74,8 @@ const adminNavigationSections = ref([
     isOpen: false,
     items: [
       { name: 'Community', path: '/admin/community', icon: 'pi pi-users' },
+      { name: 'Community Request', path: '/admin/community/request', icon: 'pi pi-file-edit' },
+      { name: 'Community Delete', path: '/admin/community/delete', icon: 'pi pi-trash' },
     ],
   },
 ])

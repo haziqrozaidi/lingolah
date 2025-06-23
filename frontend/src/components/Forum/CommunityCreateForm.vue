@@ -10,11 +10,7 @@
         <label class="block mb-1 font-medium">Established Date</label>
         <input v-model="establishedDate" type="date" required class="border rounded px-3 py-2 w-full" />
       </div>
-      <button
-        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-        type="submit"
-        :disabled="loading"
-      >
+      <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" type="submit" :disabled="loading">
         {{ loading ? 'Creating...' : 'Create Community' }}
       </button>
       <p v-if="error" class="text-red-500 mt-2">{{ error }}</p>
@@ -23,63 +19,59 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { ref } from 'vue'
+import { useSession } from '@clerk/vue'
 
-export default {
-  name: 'CommunityCreateForm',
-  props: {
-    userId: {
-      type: String,
-      required: true
-    },
-    userRole: {
-      type: String,
-      required: true
-    }
-  },
-  setup(props) {
-    const name = ref('')
-    const establishedDate = ref('')
-    const loading = ref(false)
-    const error = ref('')
-    const success = ref(false)
-
-    async function createCommunity() {
-      error.value = ''
-      success.value = false
-      loading.value = true
-      try {
-        if (props.userRole !== 'admin') {
-          error.value = 'You are not authorized.'
-          loading.value = false
-          return
-        }
-        const res = await fetch('http://localhost:3000/api/community/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: name.value,
-            establishedBy: props.userId,
-            establishedDate: establishedDate.value
-          })
-        })
-        if (!res.ok) {
-          const result = await res.json()
-          error.value = result.error || 'Failed to create community'
-          loading.value = false
-          return
-        }
-        success.value = true
-        name.value = ''
-        establishedDate.value = ''
-      } catch (e) {
-        error.value = 'Failed to create community'
-      }
-      loading.value = false
-    }
-
-    return { name, establishedDate, loading, error, success, createCommunity }
+const props = defineProps({
+  userRole: {
+    type: String,
+    required: true
   }
+})
+
+const name = ref('')
+const establishedDate = ref('')
+const loading = ref(false)
+const error = ref('')
+const success = ref(false)
+const { session } = useSession()
+
+async function createCommunity() {
+  error.value = ''
+  success.value = false
+  loading.value = true
+  try {
+    if (props.userRole !== 'admin') {
+      error.value = 'You are not authorized.'
+      loading.value = false
+      return
+    }
+    const token = await session.value.getToken()
+    const res = await fetch('http://localhost:3000/api/community/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        name: name.value,
+        establishedDate: establishedDate.value
+      }),
+      credentials: 'include'
+    })
+    if (!res.ok) {
+      const result = await res.json()
+      error.value = result.error || 'Failed to create community'
+      loading.value = false
+      return
+    }
+    success.value = true
+    name.value = ''
+    establishedDate.value = ''
+  } catch (e) {
+    error.value = 'Failed to create community'
+  }
+  loading.value = false
 }
 </script>
