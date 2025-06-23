@@ -49,5 +49,94 @@ export const FlashcardService = {
     }
   },
 
-  // Note: Create, Update, and Delete methods are not implemented yet as requested
+  /**
+   * Create a new flashcard
+   */
+  createFlashcard: async (flashcardData) => {
+    try {
+      const response = await fetch(`${API_URL}/flashcards`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          frontText: flashcardData.frontText,
+          backText: flashcardData.backText,
+          difficulty: flashcardData.difficulty,
+          setId: flashcardData.setId
+        })
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || `HTTP error! Status: ${response.status}`)
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error creating flashcard:', error)
+      throw error
+    }
+  },
+
+  /**
+   * Update a flashcard
+   */
+  updateFlashcard: async (id, flashcardData) => {
+    try {
+      const response = await fetch(`${API_URL}/flashcards/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          frontText: flashcardData.frontText,
+          backText: flashcardData.backText,
+          difficulty: flashcardData.difficulty,
+          setId: flashcardData.setId
+        })
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || `HTTP error! Status: ${response.status}`)
+      }
+      return await response.json()
+    } catch (error) {
+      console.error(`Error updating flashcard ${id}:`, error)
+      throw error
+    }
+  },
+
+  /**
+   * Delete a flashcard
+   */
+  deleteFlashcard: async (id) => {
+    try {
+      const response = await fetch(`${API_URL}/flashcards/${id}`, {
+        method: 'DELETE'
+      })
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.details || `HTTP error! Status: ${response.status}`)
+      }
+      return true
+    } catch (error) {
+      console.error(`Error deleting flashcard ${id}:`, error)
+      throw error
+    }
+  },
+
+  /**
+   * Get all flashcard sets
+   */
+  getAllFlashcardSets: async () => {
+    try {
+      const response = await fetch(`${API_URL}/flashcard-sets`)
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`)
+      }
+      return await response.json()
+    } catch (error) {
+      console.error('Error fetching flashcard sets:', error)
+      throw error
+    }
+  }
 }

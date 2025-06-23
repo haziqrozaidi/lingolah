@@ -4,7 +4,7 @@
       <h1 class="text-2xl font-bold text-gray-900 mb-4 md:mb-0">Flashcard Management</h1>
       <button
         @click="openCreateModal"
-        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:r[...]"
+        class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -45,6 +45,7 @@
     <!-- Create Flashcard Modal -->
     <FlashcardCreateModal
       :isOpen="isCreateModalOpen"
+      :flashcardSets="flashcardSets"
       @close="closeCreateModal"
       @save="handleSaveFlashcard"
     />
@@ -53,6 +54,7 @@
     <FlashcardEditModal
       :isOpen="isEditModalOpen"
       :flashcard="selectedFlashcard"
+      :flashcardSets="flashcardSets"
       @close="closeEditModal"
       @update="handleUpdateFlashcard"
     />
@@ -85,6 +87,7 @@ export default {
   data() {
     return {
       flashcards: [],
+      flashcardSets: [],
       loading: true,
       error: null,
       isCreateModalOpen: false,
@@ -94,7 +97,14 @@ export default {
     }
   },
   async created() {
-    await this.fetchFlashcards()
+    try {
+      await Promise.all([
+        this.fetchFlashcards(),
+        this.fetchFlashcardSets()
+      ])
+    } catch (error) {
+      console.error('Error during initialization:', error)
+    }
   },
   methods: {
     async fetchFlashcards() {
@@ -107,6 +117,15 @@ export default {
         console.error(error)
       } finally {
         this.loading = false
+      }
+    },
+    async fetchFlashcardSets() {
+      try {
+        this.flashcardSets = await FlashcardService.getAllFlashcardSets()
+      } catch (error) {
+        console.error('Failed to load flashcard sets:', error)
+        // Fallback to empty array
+        this.flashcardSets = []
       }
     },
     openCreateModal() {
@@ -131,38 +150,44 @@ export default {
       this.isDeleteModalOpen = false
       this.selectedFlashcard = null
     },
-    handleSaveFlashcard(flashcard) {
-      // This would typically save the flashcard to your backend
-      console.log('Saving flashcard:', flashcard)
-
-      // For now, just close the modal
-      this.closeCreateModal()
-
-      // In the future, we would implement the following:
-      // await FlashcardService.createFlashcard(flashcard)
-      // await this.fetchFlashcards() // Refresh the list
+    async handleSaveFlashcard(flashcard) {
+      try {
+        this.loading = true
+        await FlashcardService.createFlashcard(flashcard)
+        await this.fetchFlashcards()
+        this.closeCreateModal()
+      } catch (error) {
+        this.error = `Failed to create flashcard: ${error.message}`
+        console.error(error)
+      } finally {
+        this.loading = false
+      }
     },
-    handleUpdateFlashcard(flashcard) {
-      // This would typically update the flashcard in your backend
-      console.log('Updating flashcard:', flashcard)
-
-      // For now, just close the modal
-      this.closeEditModal()
-
-      // In the future, we would implement the following:
-      // await FlashcardService.updateFlashcard(flashcard.id, flashcard)
-      // await this.fetchFlashcards() // Refresh the list
+    async handleUpdateFlashcard(flashcard) {
+      try {
+        this.loading = true
+        await FlashcardService.updateFlashcard(flashcard.id, flashcard)
+        await this.fetchFlashcards()
+        this.closeEditModal()
+      } catch (error) {
+        this.error = `Failed to update flashcard: ${error.message}`
+        console.error(error)
+      } finally {
+        this.loading = false
+      }
     },
-    handleDeleteFlashcard(flashcard) {
-      // This would typically delete the flashcard from your backend
-      console.log('Deleting flashcard:', flashcard)
-
-      // For now, just close the modal
-      this.closeDeleteModal()
-
-      // In the future, we would implement the following:
-      // await FlashcardService.deleteFlashcard(flashcard.id)
-      // await this.fetchFlashcards() // Refresh the list
+    async handleDeleteFlashcard(flashcard) {
+      try {
+        this.loading = true
+        await FlashcardService.deleteFlashcard(flashcard.id)
+        await this.fetchFlashcards()
+        this.closeDeleteModal()
+      } catch (error) {
+        this.error = `Failed to delete flashcard: ${error.message}`
+        console.error(error)
+      } finally {
+        this.loading = false
+      }
     },
   },
 }
