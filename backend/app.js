@@ -13,6 +13,7 @@ var adminForumRouter = require('./routes/adminForum');
 var flashcardSetsRouter = require('./routes/flashcardSets');
 var clerkUserRouter = require('./routes/clerkUser');
 var communityRouter = require('./routes/community');
+const flashcardRoutes = require('./routes/flashcards');
 
 var app = express();
 
@@ -33,5 +34,6 @@ app.use('/api/forum', forumRouter);
 app.use('/api/admin/forum', adminForumRouter);
 app.use('/api/community', communityRouter);
 app.use('/flashcard-sets', flashcardSetsRouter);
+app.use('/flashcards', flashcardRoutes);
 
 module.exports = app;

@@ -26,6 +26,10 @@
 
       <!-- Content -->
       <div class="px-6 py-4">
+        <div v-if="formError" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <p>{{ formError }}</p>
+        </div>
+        
         <p class="text-gray-700">Are you sure you want to delete this flashcard?</p>
       </div>
 
@@ -40,8 +44,10 @@
         <button
           @click="confirmDelete"
           class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          :disabled="isDeleting"
         >
-          Delete
+          <span v-if="isDeleting">Deleting...</span>
+          <span v-else>Delete</span>
         </button>
       </div>
     </div>
@@ -61,16 +67,31 @@ export default {
       default: null,
     },
   },
+  data() {
+    return {
+      isDeleting: false,
+      formError: '',
+    }
+  },
   methods: {
     closeModal() {
       this.$emit('close')
+      this.formError = ''
     },
-    confirmDelete() {
-      // This would typically delete the flashcard via API, but since no functionality is needed
-      // we'll just log the data and close the modal
-      console.log('Deleting flashcard:', this.flashcard)
-      this.$emit('delete', this.flashcard)
-      this.closeModal()
+    async confirmDelete() {
+      if (!this.flashcard || !this.flashcard.id) {
+        this.formError = 'Invalid flashcard data'
+        return
+      }
+
+      this.isDeleting = true
+      try {
+        await this.$emit('delete', this.flashcard)
+      } catch (error) {
+        this.formError = `Failed to delete: ${error.message}`
+      } finally {
+        this.isDeleting = false
+      }
     },
   },
 }
