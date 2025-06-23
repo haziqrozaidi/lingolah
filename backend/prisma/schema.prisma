@@ -147,6 +147,7 @@ model Like {
 }
 
 model Comment {
+  id        String   @id @default(cuid())
   postId    String   @map("post_id")
   userId    String   @map("user_id")
   createdAt DateTime @default(now()) @map("created_at")
@@ -156,7 +157,6 @@ model Comment {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([postId, userId])
   @@map("Comment")
 }
 
