@@ -242,6 +242,10 @@ export default {
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
+    async handlePostCreated() {
+    await this.fetchPosts();
+    this.showCreate = false; // Optionally close modal
+  },
     openReportDialog(postId) {
       this.currentReportPostId = postId;
       this.showReportDialogVisible = true;
