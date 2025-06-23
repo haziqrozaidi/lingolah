@@ -52,7 +52,7 @@ const adminNavigationSections = ref([
   {
     title: 'Main',
     isOpen: true,
-    items: [{ name: 'Dashboard', path: '/', icon: 'pi pi-home' }],
+    items: [{ name: 'Dashboard', path: '/admin', icon: 'pi pi-home' }],
   },
   {
     title: 'Manage Flashcard',
