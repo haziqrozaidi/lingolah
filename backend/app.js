@@ -17,10 +17,7 @@ var communityRouter = require('./routes/community');
 var app = express();
 
 // CORS must go AFTER app is defined, and only ONCE
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
-}));
+app.use(cors());
 
 app.use(logger('dev'));
 app.use(express.json());
