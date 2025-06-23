@@ -212,10 +212,14 @@ export default {
   },
   computed: {
     filteredPosts() {
+      // Filter by community first
+      let posts;
       if (!this.community || this.community.id === 'general') {
-        return this.posts.filter(p => !p.communityId);
+        posts = this.posts.filter(p => !p.communityId);
+      } else {
+        posts = this.posts.filter(p => p.communityId === this.community.id);
       }
-      const posts = this.posts.filter(p => p.communityId === this.community.id);
+      // Then filter by category (unless "All")
       if (this.selectedCategory === "All") return posts;
       return posts.filter(p => p.category === this.selectedCategory);
     },
@@ -243,9 +247,9 @@ export default {
   },
   methods: {
     async handlePostCreated() {
-    await this.fetchPosts();
-    this.showCreate = false; // Optionally close modal
-  },
+      await this.fetchPosts();
+      this.showCreate = false; // Optionally close modal
+    },
     openReportDialog(postId) {
       this.currentReportPostId = postId;
       this.showReportDialogVisible = true;
@@ -424,7 +428,7 @@ export default {
           const idx = this.posts.findIndex(p => p.id === post.id);
           if (idx !== -1) this.posts[idx] = updatedPost;
         }
-      } catch (e) {}
+      } catch (e) { }
     },
     closePostDetailModal() {
       this.showPostDetailModal = false;
