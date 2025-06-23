@@ -78,9 +78,9 @@
                   <button class="text-red-600" @click.stop="deletePost(post.id); closeMenu()">Delete</button>
                 </li>
                 <li v-if="dbUserId && post.userId !== dbUserId">
-                  <button @click.stop="reportPost(post.id); closeMenu()" :disabled="post.reported">
-                    {{ post.reported ? "Reported" : "Report" }}
-                  </button>
+                  <button @click.stop="openReportDialog(post.id)">Report</button>
+                  <ReportPostDialog :postId="currentReportPostId" v-model:visible="showReportDialogVisible"
+                    @reported="onReported" />
                 </li>
               </ul>
             </div>
@@ -161,19 +161,24 @@
 
 <script>
 import PostDetailModal from './PostDetailModal.vue'
+import ReportPostDialog from '@/components/Forum/ReportPostDialog.vue'
 import CreatePost from './CreatePost.vue'
 import { useUserStore } from "@/stores/userStore";
+
 export default {
   name: 'ForumMainContent',
   components: {
     PostDetailModal,
-    CreatePost
+    CreatePost,
+    ReportPostDialog
   },
   props: {
     community: { type: Object, required: true }
   },
   data() {
     return {
+      showReportDialogVisible: false,
+      currentReportPostId: null,
       commentImages: {},
       userImages: {},
       posts: [],
@@ -207,11 +212,9 @@ export default {
   },
   computed: {
     filteredPosts() {
-      // If "General" tab is selected (currentCommunity is null or 'general'), show posts without communityId
       if (!this.community || this.community.id === 'general') {
         return this.posts.filter(p => !p.communityId);
       }
-      // Otherwise, show posts for the selected community
       const posts = this.posts.filter(p => p.communityId === this.community.id);
       if (this.selectedCategory === "All") return posts;
       return posts.filter(p => p.category === this.selectedCategory);
@@ -239,6 +242,14 @@ export default {
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
+    openReportDialog(postId) {
+      this.currentReportPostId = postId;
+      this.showReportDialogVisible = true;
+    },
+    onReported() {
+      this.showReportDialogVisible = false;
+      // Optionally refresh posts or show a notification
+    },
     async fetchUserProfile(userId) {
       if (!userId) return null;
       const res = await fetch(`http://localhost:3000/api/clerk-user/${userId}`);
@@ -272,12 +283,10 @@ export default {
       return data.id;
     },
     async fetchPosts() {
-      // Always fetch all posts
       const res = await fetch('http://localhost:3000/api/forum/posts');
       const allPosts = await res.json();
-      this.posts = allPosts; // Store all posts, filtering is handled in computed
+      this.posts = allPosts;
 
-      // Fetch like status and comments for currently filtered posts only
       let filtered;
       if (!this.community || this.community.id === 'general') {
         filtered = this.posts.filter(p => !p.communityId);
@@ -300,7 +309,6 @@ export default {
       if (!this.dbUserId) {
         this.dbUserId = await this.fetchDbUserIdByClerkId(userStore.userId);
       }
-      // Add communityId to the payload!
       await fetch('http://localhost:3000/api/forum/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -313,22 +321,6 @@ export default {
       this.newPost = { title: '', content: '', category: '' };
       this.showCreate = false;
       await this.fetchPosts();
-    },
-    async reportPost(postId) {
-      try {
-        const res = await fetch(`http://localhost:3000/api/forum/posts/${postId}/report`, {
-          method: 'POST',
-        });
-        if (!res.ok) {
-          const error = await res.json();
-          alert('Failed to report post: ' + error.error);
-          return;
-        }
-        await this.fetchPosts();
-        alert('Post reported!');
-      } catch (err) {
-        alert('Network error: ' + err.message);
-      }
     },
     openEditModal(post) {
       this.editPost = { ...post };
@@ -384,7 +376,6 @@ export default {
       const comments = await res.json();
       this.commentLists[postId] = comments;
 
-      // Fetch and cache commenter profile images
       for (const comment of comments) {
         const userId = comment.userId;
         if (userId && !this.commentImages[userId]) {
@@ -414,7 +405,6 @@ export default {
       this.fetchLikeStatus(post.id);
       this.countView(post.id);
 
-      // Fetch and cache the profile image for modal
       if (!this.userImages[post.userId]) {
         const profile = await this.fetchUserProfile(post.userId);
         if (profile && profile.imageUrl) {
@@ -422,7 +412,6 @@ export default {
         }
       }
 
-      // Optionally refresh the post data
       try {
         const res = await fetch(`http://localhost:3000/api/forum/posts/${post.id}`);
         if (res.ok) {
@@ -431,16 +420,13 @@ export default {
           const idx = this.posts.findIndex(p => p.id === post.id);
           if (idx !== -1) this.posts[idx] = updatedPost;
         }
-      } catch (e) {
-        // Ignore error, fallback to local post data
-      }
+      } catch (e) {}
     },
     closePostDetailModal() {
       this.showPostDetailModal = false;
       this.detailPostData = {};
     },
     async handleAddComment(commentPayload) {
-      // Use the modal's detailPostData.id
       await this.postComment(this.detailPostData.id, commentPayload.content);
       await this.fetchComments(this.detailPostData.id);
     }

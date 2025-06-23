@@ -2,7 +2,13 @@ var express = require("express");
 var router = express.Router();
 const { PrismaClient } = require("../generated/prisma");
 const prisma = new PrismaClient();
+const cors = require('cors');
 
+// Apply CORS ONLY to this router
+router.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 // Get all posts
 router.get("/posts", async (req, res) => {
   try {
@@ -73,19 +79,7 @@ router.delete("/posts/:id", async (req, res) => {
   }
 });
 /*RERPORTING SECTION*/
-// Report a post
-router.post("/posts/:id/report", async (req, res) => {
-  const { id } = req.params;
-  try {
-    const post = await prisma.post.update({
-      where: { id },
-      data: { reported: true },
-    });
-    res.json(post);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-});
+
 // Get all reported posts (for admin)
 router.get("/posts/reported", async (req, res) => {
   try {
@@ -183,6 +177,40 @@ router.get("/posts/:id", async (req, res) => {
     if (!post) return res.status(404).json({ error: "Post not found" });
     res.json(post);
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ==== Report a post (USER FACING ENDPOINT) ====
+router.post("/posts/:id/report", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason, details, reporterId } = req.body;
+    console.log("Report Attempt: ", { id, reason, details, reporterId });
+
+    if (!reason) return res.status(400).json({ error: "Reason required" });
+
+    // 1. CREATE THE REPORT RECORD
+    const report = await prisma.report.create({
+      data: {
+        postId: id,
+        reason,
+        details,
+        reporterId: reporterId || null
+      }
+    });
+    console.log("Report CREATED: ", report);
+
+    // 2. MARK THE POST AS REPORTED
+    const updated = await prisma.post.update({
+      where: { id },
+      data: { reported: true }
+    });
+    console.log("Post updated: ", updated);
+
+    res.json({ message: "Report submitted!", report });
+  } catch (err) {
+    console.error("Report error:", err);
     res.status(500).json({ error: err.message });
   }
 });
