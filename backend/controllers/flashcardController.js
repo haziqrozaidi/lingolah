@@ -98,6 +98,51 @@ exports.getFlashcardById = async (id) => {
 };
 
 /**
+ * Create a new flashcard
+ * Required fields: frontText, backText, difficulty, setId
+ */
+exports.createFlashcard = async (flashcardData) => {
+  try {
+    // Check if the set exists
+    const existingSet = await prisma.flashcardSet.findUnique({
+      where: { id: flashcardData.setId }
+    });
+
+    if (!existingSet) {
+      throw new Error(`Flashcard set with ID ${flashcardData.setId} not found`);
+    }
+
+    // Create the flashcard
+    const newFlashcard = await prisma.flashcard.create({
+      data: {
+        frontText: flashcardData.frontText,
+        backText: flashcardData.backText,
+        difficulty: flashcardData.difficulty,
+        setId: flashcardData.setId
+      },
+      include: {
+        set: {
+          include: {
+            category: true,
+            user: {
+              select: {
+                id: true,
+                username: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    return formatFlashcard(newFlashcard);
+  } catch (error) {
+    console.error('Error in createFlashcard:', error);
+    throw error;
+  }
+};
+
+/**
  * Helper function to format flashcard data
  */
 function formatFlashcard(flashcard) {

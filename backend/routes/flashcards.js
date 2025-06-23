@@ -62,4 +62,45 @@ router.get('/set/:setId', async (req, res) => {
   }
 });
 
+/**
+ * POST /flashcards
+ * Creates a new flashcard
+ */
+router.post('/', async (req, res) => {
+  const { frontText, backText, difficulty, setId } = req.body;
+  
+  // Validate required fields
+  if (!frontText || !backText || !difficulty || !setId) {
+    return res.status(400).json({
+      error: 'Missing required fields',
+      requiredFields: ['frontText', 'backText', 'difficulty', 'setId']
+    });
+  }
+  
+  try {
+    const flashcard = await flashcardController.createFlashcard({
+      frontText,
+      backText,
+      difficulty,
+      setId
+    });
+    
+    res.status(201).json(flashcard);
+  } catch (error) {
+    console.error('Error creating flashcard:', error);
+    
+    if (error.message.includes('not found')) {
+      return res.status(404).json({
+        error: 'Failed to create flashcard',
+        details: error.message
+      });
+    }
+    
+    res.status(500).json({
+      error: 'Failed to create flashcard',
+      details: error.message
+    });
+  }
+});
+
 module.exports = router;
