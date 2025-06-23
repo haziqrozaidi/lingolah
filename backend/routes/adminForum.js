@@ -13,6 +13,21 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// Get details of a report for a post
+router.get("/posts/:postId/report", async (req, res) => {
+  const { postId } = req.params;
+  try {
+    const report = await prisma.report.findFirst({
+      where: { postId },
+      include: { reporter: true }, // If you want user details
+      orderBy: { dateReported: 'desc' }
+    });
+    if (!report) return res.status(404).json({ error: "Report not found" });
+    res.json(report);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // Get all reported posts that still need to be resolved
 router.get("/reported/pending", requireAdmin, async (req, res) => {
   try {
@@ -32,7 +47,7 @@ router.get("/reported/pending", requireAdmin, async (req, res) => {
 router.get("/reported/resolved", requireAdmin, async (req, res) => {
   try {
     const posts = await prisma.post.findMany({
-      where: { reported: true, reportResolved: true },
+      where: { reported: false, reportResolved: true },
       include: { user: true },
       orderBy: { date: "desc" },
     });
