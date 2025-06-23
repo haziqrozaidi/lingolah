@@ -277,13 +277,8 @@ export default {
       if (!newCard || !this.selectedSet) return
       
       try {
-        // Add the new card to the selected set's flashcards array
-        if (!this.selectedSet.flashcards) {
-          this.selectedSet.flashcards = []
-        }
-        this.selectedSet.flashcards.push(newCard)
-        
-        // Update the flashcard set in the main list if needed
+        // The card has already been added to selectedSet.flashcards in the modal component
+        // So we only need to update the flashcard set in the main list
         const setIndex = this.flashcardSets.findIndex(set => set.id === this.selectedSet.id)
         if (setIndex !== -1) {
           const updatedSet = { ...this.flashcardSets[setIndex] }
