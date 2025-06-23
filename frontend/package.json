@@ -11,7 +11,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
-    "@clerk/vue": "^1.8.2",
+    "@clerk/vue": "^1.8.8",
     "@primeuix/themes": "^1.1.1",
     "@tailwindcss/vite": "^4.1.7",
     "jquery": "^3.7.1",

@@ -1,190 +1,45 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
-// Dummy data for video categories
-const videoCategories = ref([
-  {
-    id: 1,
-    title: 'Daily Conversations',
-    videos: [
-      {
-        id: 101,
-        title: 'Ordering Food at a Restaurant',
-        thumbnail: 'https://placehold.co/320x180/3b82f6/ffffff?text=Restaurant',
-        duration: '5:24',
-        difficulty: 'Beginner',
-      },
-      {
-        id: 102,
-        title: 'Asking for Directions',
-        thumbnail: 'https://placehold.co/320x180/3b82f6/ffffff?text=Directions',
-        duration: '4:12',
-        difficulty: 'Beginner',
-      },
-      {
-        id: 103,
-        title: 'Shopping for Clothes',
-        thumbnail: 'https://placehold.co/320x180/3b82f6/ffffff?text=Shopping',
-        duration: '6:45',
-        difficulty: 'Beginner',
-      },
-      {
-        id: 104,
-        title: 'Making Small Talk',
-        thumbnail: 'https://placehold.co/320x180/3b82f6/ffffff?text=Small+Talk',
-        duration: '7:18',
-        difficulty: 'Intermediate',
-      },
-      {
-        id: 105,
-        title: "At the Doctor's Office",
-        thumbnail: 'https://placehold.co/320x180/3b82f6/ffffff?text=Doctor',
-        duration: '8:10',
-        difficulty: 'Intermediate',
-      },
-    ],
-  },
-  {
-    id: 2,
-    title: 'News Clips',
-    videos: [
-      {
-        id: 201,
-        title: 'Daily News Digest',
-        thumbnail: 'https://placehold.co/320x180/22c55e/ffffff?text=News',
-        duration: '10:15',
-        difficulty: 'Advanced',
-      },
-      {
-        id: 202,
-        title: 'Weather Forecast',
-        thumbnail: 'https://placehold.co/320x180/22c55e/ffffff?text=Weather',
-        duration: '3:45',
-        difficulty: 'Intermediate',
-      },
-      {
-        id: 203,
-        title: 'Business Update',
-        thumbnail: 'https://placehold.co/320x180/22c55e/ffffff?text=Business',
-        duration: '7:30',
-        difficulty: 'Advanced',
-      },
-      {
-        id: 204,
-        title: 'Sports Highlights',
-        thumbnail: 'https://placehold.co/320x180/22c55e/ffffff?text=Sports',
-        duration: '8:22',
-        difficulty: 'Intermediate',
-      },
-    ],
-  },
-  {
-    id: 3,
-    title: 'Cultural Insights',
-    videos: [
-      {
-        id: 301,
-        title: 'Traditional Festivals',
-        thumbnail: 'https://placehold.co/320x180/ef4444/ffffff?text=Festivals',
-        duration: '12:30',
-        difficulty: 'Intermediate',
-      },
-      {
-        id: 302,
-        title: 'Local Cuisine',
-        thumbnail: 'https://placehold.co/320x180/ef4444/ffffff?text=Cuisine',
-        duration: '9:45',
-        difficulty: 'Beginner',
-      },
-      {
-        id: 303,
-        title: 'Family Traditions',
-        thumbnail: 'https://placehold.co/320x180/ef4444/ffffff?text=Traditions',
-        duration: '11:20',
-        difficulty: 'Advanced',
-      },
-      {
-        id: 304,
-        title: 'Social Etiquette',
-        thumbnail: 'https://placehold.co/320x180/ef4444/ffffff?text=Etiquette',
-        duration: '8:15',
-        difficulty: 'Intermediate',
-      },
-      {
-        id: 305,
-        title: 'Historical Landmarks',
-        thumbnail: 'https://placehold.co/320x180/ef4444/ffffff?text=Landmarks',
-        duration: '14:50',
-        difficulty: 'Advanced',
-      },
-    ],
-  },
-  {
-    id: 4,
-    title: 'Grammar Lessons',
-    videos: [
-      {
-        id: 401,
-        title: 'Present Tense Explained',
-        thumbnail: 'https://placehold.co/320x180/8b5cf6/ffffff?text=Present+Tense',
-        duration: '7:15',
-        difficulty: 'Beginner',
-      },
-      {
-        id: 402,
-        title: 'Past Tense Rules',
-        thumbnail: 'https://placehold.co/320x180/8b5cf6/ffffff?text=Past+Tense',
-        duration: '8:30',
-        difficulty: 'Beginner',
-      },
-      {
-        id: 403,
-        title: 'Future Tense Usage',
-        thumbnail: 'https://placehold.co/320x180/8b5cf6/ffffff?text=Future+Tense',
-        duration: '6:45',
-        difficulty: 'Intermediate',
-      },
-      {
-        id: 404,
-        title: 'Conditional Sentences',
-        thumbnail: 'https://placehold.co/320x180/8b5cf6/ffffff?text=Conditionals',
-        duration: '9:20',
-        difficulty: 'Advanced',
-      },
-    ],
-  },
-])
-
-// Search functionality
+const videos = ref([]) // Toutes les vidéos récupérées du backend
 const searchQuery = ref('')
 
-// Filtered categories based on search
-const filteredCategories = computed(() => {
-  if (!searchQuery.value.trim()) {
-    return videoCategories.value
-  }
-  
-  const query = searchQuery.value.toLowerCase()
-  
-  return videoCategories.value.map(category => {
-    // Filter videos within each category
-    const filteredVideos = category.videos.filter(video => 
-      video.title.toLowerCase().includes(query) || 
-      video.difficulty.toLowerCase().includes(query)
-    )
-    
-    // Return category with filtered videos if any match
-    return filteredVideos.length > 0 ? {
-      ...category,
-      videos: filteredVideos
-    } : null
-  }).filter(Boolean) // Remove null categories (those with no matching videos)
+// Récupérer les vidéos depuis l'API au chargement
+onMounted(async () => {
+  const res = await fetch('http://localhost:3000/api/videos')
+  videos.value = await res.json()
 })
 
-// Function to handle video play
+// Catégoriser les vidéos (par exemple par topic)
+const videoCategories = computed(() => {
+  const categories = {}
+  videos.value.forEach(video => {
+    const topic = video.topic || 'Other'
+    if (!categories[topic]) categories[topic] = []
+    categories[topic].push(video)
+  })
+  // Retourne un tableau d'objets { title, videos }
+  return Object.entries(categories).map(([title, videos]) => ({ title, videos }))
+})
+
+// Filtrer les catégories selon la recherche
+const filteredCategories = computed(() => {
+  if (!searchQuery.value.trim()) return videoCategories.value
+  const query = searchQuery.value.toLowerCase()
+  return videoCategories.value
+    .map(category => {
+      const filteredVideos = category.videos.filter(video =>
+        video.title.toLowerCase().includes(query) ||
+        (video.difficulty && video.difficulty.toLowerCase().includes(query))
+      )
+      return filteredVideos.length > 0 ? { ...category, videos: filteredVideos } : null
+    })
+    .filter(Boolean)
+})
+
+// Fonction pour jouer une vidéo (à adapter selon ton besoin)
 const playVideo = (videoId) => {
   console.log(`Playing video with ID: ${videoId}`)
-  // Future implementation: video playback functionality
 }
 </script>
 
@@ -226,7 +81,7 @@ const playVideo = (videoId) => {
 
     <!-- Video Categories with Grid Layout -->
     <div class="space-y-10">
-      <section v-for="category in filteredCategories" :key="category.id" class="category-section">
+      <section v-for="category in filteredCategories" :key="category.title" class="category-section">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold text-gray-800">{{ category.title }}</h2>
           <button class="text-blue-600 text-sm font-medium hover:text-blue-800">
