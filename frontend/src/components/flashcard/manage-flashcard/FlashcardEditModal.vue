@@ -27,6 +27,14 @@
       <!-- Form Content -->
       <div class="px-6 py-4">
         <form @submit.prevent="handleSubmit">
+          <!-- Error Display -->
+          <div
+            v-if="formError"
+            class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"
+          >
+            <p>{{ formError }}</p>
+          </div>
+
           <!-- Front Text -->
           <div class="mb-4">
             <label for="frontText" class="block text-sm font-medium text-gray-700 mb-1"
@@ -77,12 +85,12 @@
             <label for="set" class="block text-sm font-medium text-gray-700 mb-1">Set</label>
             <select
               id="set"
-              v-model="editedFlashcard.setName"
+              v-model="editedFlashcard.setId"
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="" disabled>Select flashcard set</option>
-              <option v-for="set in flashcardSets" :key="set.id" :value="set.name">
-                {{ set.name }}
+              <option v-for="set in flashcardSets" :key="set.id" :value="set.id">
+                {{ set.title }}
               </option>
             </select>
           </div>
@@ -100,8 +108,10 @@
         <button
           @click="handleSubmit"
           class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          :disabled="isSubmitting"
         >
-          Update
+          <span v-if="isSubmitting">Updating...</span>
+          <span v-else>Update</span>
         </button>
       </div>
     </div>
@@ -123,8 +133,12 @@ export default {
         frontText: '',
         backText: '',
         difficulty: '',
-        setName: '',
+        setId: '',
       }),
+    },
+    flashcardSets: {
+      type: Array,
+      default: () => [],
     },
   },
   data() {
@@ -134,17 +148,10 @@ export default {
         frontText: '',
         backText: '',
         difficulty: '',
-        setName: '',
+        setId: '',
       },
-      // Mock data for flashcard sets
-      flashcardSets: [
-        { id: 1, name: 'Web Development' },
-        { id: 2, name: 'Vue Basics' },
-        { id: 3, name: 'Vue Advanced' },
-        { id: 4, name: 'JavaScript Fundamentals' },
-        { id: 5, name: 'CSS Properties' },
-        { id: 6, name: 'HTML Elements' },
-      ],
+      formError: '',
+      isSubmitting: false,
     }
   },
   watch: {
@@ -157,7 +164,7 @@ export default {
       },
     },
     isOpen(newVal) {
-      if (newVal) {
+      if (newVal && this.flashcard) {
         // Reset form values to current flashcard values when modal opens
         this.editedFlashcard = { ...this.flashcard }
       }
@@ -166,13 +173,38 @@ export default {
   methods: {
     closeModal() {
       this.$emit('close')
+      this.formError = ''
     },
-    handleSubmit() {
-      // Here we would typically send data to an API, but since no functionality is needed
-      // we'll just log the data and close the modal
-      console.log('Updated flashcard data:', this.editedFlashcard)
-      this.$emit('update', this.editedFlashcard)
-      this.closeModal()
+    async handleSubmit() {
+      this.formError = ''
+
+      // Validate form
+      if (!this.editedFlashcard.frontText) {
+        this.formError = 'Front text is required'
+        return
+      }
+      if (!this.editedFlashcard.backText) {
+        this.formError = 'Back text is required'
+        return
+      }
+      if (!this.editedFlashcard.difficulty) {
+        this.formError = 'Difficulty is required'
+        return
+      }
+      if (!this.editedFlashcard.setId) {
+        this.formError = 'Flashcard set is required'
+        return
+      }
+
+      // Submit form
+      this.isSubmitting = true
+      try {
+        await this.$emit('update', this.editedFlashcard)
+      } catch (error) {
+        this.formError = error.message
+      } finally {
+        this.isSubmitting = false
+      }
     },
   },
 }

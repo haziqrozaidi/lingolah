@@ -27,6 +27,14 @@
       <!-- Form Content -->
       <div class="px-6 py-4">
         <form @submit.prevent="handleSubmit">
+          <!-- Error Display -->
+          <div
+            v-if="formError"
+            class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"
+          >
+            <p>{{ formError }}</p>
+          </div>
+
           <!-- Front Text -->
           <div class="mb-4">
             <label for="frontText" class="block text-sm font-medium text-gray-700 mb-1"
@@ -66,9 +74,9 @@
               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="" disabled>Select difficulty</option>
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
+              <option value="Easy">Easy</option>
+              <option value="Medium">Medium</option>
+              <option value="Hard">Hard</option>
             </select>
           </div>
 
@@ -82,7 +90,7 @@
             >
               <option value="" disabled>Select flashcard set</option>
               <option v-for="set in flashcardSets" :key="set.id" :value="set.id">
-                {{ set.name }}
+                {{ set.title }}
               </option>
             </select>
           </div>
@@ -100,8 +108,10 @@
         <button
           @click="handleSubmit"
           class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          :disabled="isSubmitting"
         >
-          Save
+          <span v-if="isSubmitting">Saving...</span>
+          <span v-else>Save</span>
         </button>
       </div>
     </div>
@@ -116,6 +126,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    flashcardSets: {
+      type: Array,
+      default: () => [],
+    },
   },
   data() {
     return {
@@ -125,13 +139,8 @@ export default {
         difficulty: '',
         setId: '',
       },
-      // Mock data for flashcard sets
-      flashcardSets: [
-        { id: 1, name: 'Basic Vue Concepts' },
-        { id: 2, name: 'JavaScript Fundamentals' },
-        { id: 3, name: 'CSS Properties' },
-        { id: 4, name: 'HTML Elements' },
-      ],
+      formError: '',
+      isSubmitting: false,
     }
   },
   methods: {
@@ -139,12 +148,37 @@ export default {
       this.$emit('close')
       this.resetForm()
     },
-    handleSubmit() {
-      // Here we would typically send data to an API, but since no functionality is needed
-      // we'll just log the data and close the modal
-      console.log('Flashcard data:', this.flashcard)
-      this.$emit('save', this.flashcard)
-      this.closeModal()
+    async handleSubmit() {
+      this.formError = ''
+
+      // Validate form
+      if (!this.flashcard.frontText) {
+        this.formError = 'Front text is required'
+        return
+      }
+      if (!this.flashcard.backText) {
+        this.formError = 'Back text is required'
+        return
+      }
+      if (!this.flashcard.difficulty) {
+        this.formError = 'Difficulty is required'
+        return
+      }
+      if (!this.flashcard.setId) {
+        this.formError = 'Flashcard set is required'
+        return
+      }
+
+      // Submit form
+      this.isSubmitting = true
+      try {
+        await this.$emit('save', this.flashcard)
+        this.resetForm()
+      } catch (error) {
+        this.formError = error.message
+      } finally {
+        this.isSubmitting = false
+      }
     },
     resetForm() {
       this.flashcard = {
@@ -153,7 +187,16 @@ export default {
         difficulty: '',
         setId: '',
       }
+      this.formError = ''
     },
   },
+  watch: {
+    isOpen(newVal) {
+      if (newVal && this.flashcardSets.length > 0) {
+        // Pre-select first set if available
+        this.flashcard.setId = this.flashcardSets[0].id
+      }
+    }
+  }
 }
 </script>
