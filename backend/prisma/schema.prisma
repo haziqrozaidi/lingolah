@@ -148,7 +148,7 @@ model Report {
   dateReported DateTime @default(now())
 
   // Relations (optional, but recommended)
-  post        Post     @relation(fields: [postId], references: [id])
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   reporter    User?    @relation(fields: [reporterId], references: [id])
 }
 
