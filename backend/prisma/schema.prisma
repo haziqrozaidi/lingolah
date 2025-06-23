@@ -31,6 +31,7 @@ model User {
   communities    CommunityMember[]
   videoProgress  VideoProgress[]
   videoPlaylists VideoPlaylist[]
+  reports  Report[]
 
   @@map("User")
 }
@@ -133,8 +134,22 @@ model Post {
   community Community? @relation(fields: [communityId], references: [id], onDelete: Cascade)
   likes    Like[]
   comments Comment[]
+  reports Report[]
 
   @@map("Post")
+}
+
+model Report {
+  id          String   @id @default(uuid())
+  postId      String
+  reporterId  String? // if you want to associate with a user
+  reason      String
+  details     String?
+  dateReported DateTime @default(now())
+
+  // Relations (optional, but recommended)
+  post        Post     @relation(fields: [postId], references: [id])
+  reporter    User?    @relation(fields: [reporterId], references: [id])
 }
 
 model Like {

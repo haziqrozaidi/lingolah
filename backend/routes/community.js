@@ -4,7 +4,13 @@ const { PrismaClient } = require("../generated/prisma");
 const prisma = new PrismaClient();
 const requireAdmin = require("../middleware/requireAdmin");
 const { findUserByClerkId } = require("../utils/userHelpers");
+const cors = require('cors');
 
+// Apply CORS ONLY to this router
+router.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 // --- ADMIN/MANAGER ROUTES ---
 
 /**

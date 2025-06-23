@@ -49,7 +49,7 @@ export default {
         body: JSON.stringify({
           ...this.form,
           userId: dbUserId,
-          communityId: this.communityId         // <-- send communityId!
+          communityId: this.communityId === 'general' ? null : this.communityId         // <-- send communityId!
         })
       });
       this.form = { title: '', content: '', category: '' };
