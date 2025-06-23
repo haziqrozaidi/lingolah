@@ -125,12 +125,18 @@
 </template>
 
 <script>
+import { useUserStore } from "@/stores/userStore";
 export default {
     name: 'PostDetailModal',
     props: {
         show: Boolean,
         post: {
             type: Object,
+            required: true
+        },
+        // Pass the logged-in user's DB id as a prop!
+        currentUserId: {
+            type: String,
             required: true
         },
         currentUser: {
@@ -144,10 +150,6 @@ export default {
         liked: {
             type: Boolean,
             default: false
-        },
-        comments: {
-            type: Array,
-            default: () => []
         },
         profileImage: {
             type: String,
@@ -165,26 +167,67 @@ export default {
     data() {
         return {
             newComment: '',
-            postingComment: false
+            postingComment: false,
+            comments: [],
+            dbUserId: null,
         }
     },
+    watch: {
+        // Load comments when modal opens or post changes
+        show(val) {
+            if (val) this.fetchComments();
+        },
+        post: {
+            handler() {
+                if (this.show) this.fetchComments();
+            },
+            immediate: true
+        }
+    },
+    async mounted() {
+        const userStore = useUserStore();
+        this.dbUserId = await this.fetchDbUserIdByClerkId(userStore.userId);
+    },
     methods: {
+        async fetchDbUserIdByClerkId(clerkUserId) {
+            const res = await fetch(`http://localhost:3000/users/by-clerk-id/${clerkUserId}`);
+            if (!res.ok) throw new Error("User not found");
+            const data = await res.json();
+            return data.id;
+        },
         close() {
             this.$emit('close')
         },
-        async addComment() {
-            if (!this.newComment.trim()) return
-            this.postingComment = true
-            const commentPayload = {
-                content: this.newComment,
-                user: { username: this.currentUser },
-                createdAt: new Date().toISOString(),
-                // You can add other properties as needed
+        async fetchComments() {
+            if (!this.post.id) return;
+            try {
+                const res = await fetch(`http://localhost:3000/api/forum/posts/${this.post.id}/comments`);
+                if (!res.ok) throw new Error('Failed to fetch comments');
+                this.comments = await res.json();
+            } catch (e) {
+                this.comments = [];
             }
-            // Emit for parent to handle API call and refresh
-            this.$emit('add-comment', commentPayload)
-            this.newComment = ''
-            this.postingComment = false
+        },
+        async addComment() {
+            if (!this.newComment.trim() || !this.post.id) return;
+            this.postingComment = true;
+            try {
+
+                const res = await fetch(`http://localhost:3000/api/forum/posts/${this.post.id}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: this.dbUserId,
+                        content: this.newComment
+                    })
+                });
+                if (!res.ok) throw new Error('Failed to post comment');
+                this.newComment = '';
+                await this.fetchComments(); // Refresh local comments
+            } catch (e) {
+                console.error('Failed to post comment:', e);
+            }
+            this.postingComment = false;
         },
         toggleLike() {
             this.$emit('toggle-like')
@@ -197,7 +240,6 @@ export default {
     }
 }
 </script>
-
 <style scoped>
 .modal-mask {
     position: fixed;
