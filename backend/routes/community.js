@@ -2,32 +2,135 @@ var express = require("express");
 var router = express.Router();
 const { PrismaClient } = require("../generated/prisma");
 const prisma = new PrismaClient();
+const requireAdmin = require("../middleware/requireAdmin");
+const { findUserByClerkId } = require("../utils/userHelpers");
 
-// Middleware to check if user is admin using Clerk ID
-async function requireAdmin(req, res, next) {
-  const userId = req.body.userId || req.body.establishedBy;
-  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+// --- ADMIN/MANAGER ROUTES ---
 
-  // Find user by Clerk user ID
-  const user = await prisma.user.findFirst({ where: { clerkUserId: userId } });
-  if (!user || user.role !== "admin") {
-    return res.status(403).json({ error: "Forbidden" });
+/**
+ * List members (pending or accepted)
+ */
+router.get("/:communityId/members", requireAdmin, async (req, res) => {
+  const { communityId } = req.params;
+  const { status } = req.query; // 'pending' or 'accepted'
+  const members = await prisma.communityMember.findMany({
+    where: {
+      communityId,
+      ...(status ? { status } : {}),
+    },
+    include: { user: true },
+  });
+  res.json({ members });
+});
+
+/**
+ * Approve a pending member
+ */
+router.post(
+  "/:communityId/members/:userId/approve",
+  requireAdmin,
+  async (req, res) => {
+    const { communityId, userId } = req.params;
+    const member = await prisma.communityMember.update({
+      where: { userId_communityId: { userId, communityId } },
+      data: { status: "accepted" },
+    });
+    res.json({ member });
   }
-  // Attach user to request for later use
-  req.dbUser = user;
-  next();
-}
+);
 
+/**
+ * Reject a pending member (delete request)
+ */
+router.post(
+  "/:communityId/members/:userId/reject",
+  requireAdmin,
+  async (req, res) => {
+    const { communityId, userId } = req.params;
+    await prisma.communityMember.delete({
+      where: { userId_communityId: { userId, communityId } },
+    });
+    res.json({ success: true });
+  }
+);
+
+/**
+ * Kick a member (remove from community)
+ */
+router.delete(
+  "/:communityId/members/:userId",
+  requireAdmin,
+  async (req, res) => {
+    const { communityId, userId } = req.params;
+    await prisma.communityMember.delete({
+      where: { userId_communityId: { userId, communityId } },
+    });
+    res.json({ success: true });
+  }
+);
+
+/**
+ * Disband (delete) a community
+ */
+router.delete("/:communityId", requireAdmin, async (req, res) => {
+  const { communityId } = req.params;
+  await prisma.communityMember.deleteMany({ where: { communityId } });
+  await prisma.community.delete({ where: { id: communityId } });
+  res.json({ success: true });
+});
+
+/**
+ * List all communities managed by the current admin (legacy route)
+ */
+router.get("/admin", requireAdmin, async (req, res) => {
+  try {
+    // Use user info from middleware (req.dbUser or req.user)
+    const user = req.dbUser || req.user;
+    if (!user) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+    const adminId = user.id;
+    const communities = await prisma.community.findMany({
+      where: { establishedBy: adminId },
+    });
+    res.json({ communities });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch admin communities" });
+  }
+});
+
+/**
+ * List all communities managed by the current admin (standard route)
+ */
+router.get("/managed", requireAdmin, async (req, res) => {
+  const user = req.dbUser || req.user;
+  try {
+    const communities = await prisma.community.findMany({
+      where: { establishedBy: user.id },
+    });
+    res.json({ communities });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch managed communities." });
+  }
+});
+
+// --- COMMUNITY CREATION & MEMBERSHIP (for users & admins) ---
+
+/**
+ * Create a community (admin)
+ */
 router.post("/create", requireAdmin, async (req, res) => {
   try {
     const { name, establishedDate } = req.body;
-    const user = req.dbUser; // Set by middleware
+    const user = req.dbUser || req.user; // Set by middleware
 
     if (!name || !establishedDate) {
       return res.status(400).json({ error: "Missing fields" });
     }
 
-    // Create the community and add creator as first member
+    // Create the community and add creator as first member with status "accepted"
     const community = await prisma.community.create({
       data: {
         name,
@@ -35,7 +138,7 @@ router.post("/create", requireAdmin, async (req, res) => {
         establishedDate: new Date(establishedDate),
         memberCount: 1,
         members: {
-          create: { userId: user.id },
+          create: { userId: user.id, status: "accepted" }, // <-- set status here!
         },
       },
       include: {
@@ -56,6 +159,9 @@ router.post("/create", requireAdmin, async (req, res) => {
   }
 });
 
+/**
+ * List communities user can join (not already a member)
+ */
 router.get("/available", async (req, res) => {
   const { clerkUserId } = req.query;
   if (!clerkUserId)
@@ -80,9 +186,9 @@ router.get("/available", async (req, res) => {
   res.json({ communities: available });
 });
 
-// --- Add join community endpoint ---
-const { findUserByClerkId } = require("../utils/userHelpers");
-
+/**
+ * User requests to join a community
+ */
 router.post("/join", async (req, res) => {
   try {
     const { communityId, clerkUserId } = req.body;
@@ -112,7 +218,6 @@ router.post("/join", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     const dbUserId = user.id;
-    console.log("DB User ID:", dbUserId);
     // Add user as community member (linked by DB user id, not clerk user id)
     const newMember = await prisma.communityMember.create({
       data: {
@@ -139,7 +244,9 @@ router.post("/join", async (req, res) => {
   }
 });
 
-// GET /api/communities/joined?clerkUserId=xxx
+/**
+ * List communities the user has joined
+ */
 router.get("/joined", async (req, res) => {
   const { clerkUserId } = req.query;
 
@@ -151,7 +258,13 @@ router.get("/joined", async (req, res) => {
     include: { community: true },
   });
 
-  res.json({ communities: joinedCommunities.map((cm) => cm.community) });
+  // Include status from the membership
+  res.json({
+    communities: joinedCommunities.map((cm) => ({
+      ...cm.community,
+      status: cm.status, // add status (pending/accepted)
+    })),
+  });
 });
 
 module.exports = router;
