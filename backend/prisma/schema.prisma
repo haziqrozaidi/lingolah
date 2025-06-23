@@ -6,10 +6,52 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Video {
+  video_id     Int              @id @default(autoincrement())
+  title        String
+  url          String
+  description  String
+  topic        String
+  subtitles    String
+  created_at   DateTime         @default(now())
+  // Relations
+  playlists    VideoPlaylistItems[]
+  progresses   VideoProgress[]
+}
+
+model VideoPlaylist {
+  playlist_id  Int              @id @default(autoincrement())
+  user_id      Int
+  title        String
+  created_at   DateTime         @default(now())
+  // Relations
+  items        VideoPlaylistItems[]
+}
+
+model VideoPlaylistItems {
+  playlist_id  Int
+  video_id     Int
+  order        Int?
+  // Relations
+  playlist     VideoPlaylist    @relation(fields: [playlist_id], references: [playlist_id])
+  video        Video           @relation(fields: [video_id], references: [video_id])
+
+  @@id([playlist_id, video_id])
+}
+
+model VideoProgress {
+  user_id      Int
+  video_id     Int
+  watch_date   DateTime
+  // Relations
+  video        Video           @relation(fields: [video_id], references: [video_id])
+
+  @@id([user_id, video_id])
 }
