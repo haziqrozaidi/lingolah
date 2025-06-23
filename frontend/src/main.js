@@ -6,6 +6,8 @@ import { createPinia } from 'pinia'
 import { clerkPlugin } from '@clerk/vue'
 import PrimeVue from 'primevue/config'
 import Noir from './presets/Noir.js'
+import VuePlyr from 'vue-plyr'
+import 'vue-plyr/dist/vue-plyr.css'
 
 import App from './App.vue'
 import router from './router'
@@ -26,5 +28,7 @@ app.use(PrimeVue, {
   },
 })
 app.use(clerkPlugin, { publishableKey: PUBLISHABLE_KEY })
-
+app.use(VuePlyr, {
+   plyr: {}
+})
 app.mount('#app')
