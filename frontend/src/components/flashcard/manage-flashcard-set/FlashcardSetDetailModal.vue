@@ -102,6 +102,7 @@
               Flashcards ({{ selectedSet.flashcards.length }})
             </h4>
             <button
+              @click="openAddCardModal"
               class="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               <svg
@@ -185,10 +186,119 @@
         </button>
       </div>
     </div>
+
+    <!-- Add Card Modal -->
+    <div
+      v-if="showAddCardModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-4"
+    >
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-gray-200">
+          <div class="flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-900">Add New Flashcard</h3>
+            <button @click="closeAddCardModal" class="text-gray-400 hover:text-gray-500">
+              <svg
+                class="h-5 w-5"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Form Content -->
+        <div class="px-6 py-4">
+          <form @submit.prevent="handleAddCard">
+            <!-- Error Display -->
+            <div
+              v-if="formError"
+              class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded"
+            >
+              <p>{{ formError }}</p>
+            </div>
+
+            <!-- Front Text -->
+            <div class="mb-4">
+              <label for="frontText" class="block text-sm font-medium text-gray-700 mb-1">
+                Front Text
+              </label>
+              <textarea
+                id="frontText"
+                v-model="newCard.frontText"
+                rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter text for front of card"
+              ></textarea>
+            </div>
+
+            <!-- Back Text -->
+            <div class="mb-4">
+              <label for="backText" class="block text-sm font-medium text-gray-700 mb-1">
+                Back Text
+              </label>
+              <textarea
+                id="backText"
+                v-model="newCard.backText"
+                rows="3"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter text for back of card"
+              ></textarea>
+            </div>
+
+            <!-- Difficulty -->
+            <div class="mb-4">
+              <label for="difficulty" class="block text-sm font-medium text-gray-700 mb-1">
+                Difficulty
+              </label>
+              <select
+                id="difficulty"
+                v-model="newCard.difficulty"
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="" disabled>Select difficulty</option>
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+          </form>
+        </div>
+
+        <!-- Footer with Buttons -->
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-end space-x-3">
+          <button
+            @click="closeAddCardModal"
+            class="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            Cancel
+          </button>
+          <button
+            @click="handleAddCard"
+            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            :disabled="isSubmitting"
+          >
+            <span v-if="isSubmitting">Saving...</span>
+            <span v-else>Save</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
+import { FlashcardService } from '../../../services/flashcardService'
+
 export default {
   name: 'FlashcardSetDetailModal',
   props: {
@@ -204,6 +314,19 @@ export default {
       type: Array,
       required: true,
     },
+  },
+  data() {
+    return {
+      showAddCardModal: false,
+      newCard: {
+        frontText: '',
+        backText: '',
+        difficulty: '',
+        setId: '',
+      },
+      formError: '',
+      isSubmitting: false,
+    }
   },
   methods: {
     formatDate(dateString) {
@@ -224,6 +347,64 @@ export default {
     deleteCard(cardId) {
       this.$emit('delete-card', cardId)
     },
+    openAddCardModal() {
+      this.resetForm()
+      this.newCard.setId = this.selectedSet.id
+      this.showAddCardModal = true
+    },
+    closeAddCardModal() {
+      this.showAddCardModal = false
+      this.resetForm()
+    },
+    resetForm() {
+      this.newCard = {
+        frontText: '',
+        backText: '',
+        difficulty: '',
+        setId: this.selectedSet ? this.selectedSet.id : '',
+      }
+      this.formError = ''
+    },
+    async handleAddCard() {
+      this.formError = ''
+
+      // Validate form
+      if (!this.newCard.frontText) {
+        this.formError = 'Front text is required'
+        return
+      }
+      if (!this.newCard.backText) {
+        this.formError = 'Back text is required'
+        return
+      }
+      if (!this.newCard.difficulty) {
+        this.formError = 'Difficulty is required'
+        return
+      }
+
+      // Submit form
+      this.isSubmitting = true
+      try {
+        const createdCard = await FlashcardService.createFlashcard(this.newCard)
+        
+        // Update the flashcards array in the parent component
+        this.$emit('card-added', createdCard)
+        
+        this.closeAddCardModal()
+      } catch (error) {
+        this.formError = error.message || 'Failed to create flashcard'
+        console.error('Error creating flashcard:', error)
+      } finally {
+        this.isSubmitting = false
+      }
+    },
   },
+  watch: {
+    selectedSet(newSet) {
+      if (newSet) {
+        this.newCard.setId = newSet.id
+      }
+    }
+  }
 }
 </script>
