@@ -80,7 +80,7 @@ router.post('/sync', async function(req, res, next) {
     });
   }
 });
-// Express route
+// GET user by Clerk ID
 router.get("/by-clerk-id/:clerkUserId", async (req, res) => {
   const { clerkUserId } = req.params;
   const user = await prisma.user.findFirst({ where: { clerkUserId } });
