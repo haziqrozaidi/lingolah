@@ -18,5 +18,5 @@ RUN npx prisma generate
 # Expose the port the app runs on
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "start"]
+# Start the application with migration
+CMD ["/bin/sh", "-c", "npx prisma migrate deploy && npm start"]
