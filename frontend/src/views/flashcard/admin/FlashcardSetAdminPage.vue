@@ -73,6 +73,7 @@
       :categories="categories"
       @close="showDetailsModal = false"
       @delete-card="deleteCard"
+      @card-added="handleCardAdded"
     />
 
     <!-- Delete Confirmation Modal -->
@@ -110,6 +111,7 @@ import FlashcardSetDeleteModal from '@/components/flashcard/manage-flashcard-set
 import FlashcardSetCreateModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetCreateModal.vue'
 import FlashcardSetEditModal from '@/components/flashcard/manage-flashcard-set/FlashcardSetEditModal.vue'
 import { FlashcardSetService } from '@/services/flashcardSetService'
+import { FlashcardService } from '@/services/flashcardService'
 import { useUserStore } from '@/stores/userStore'
 
 export default {
@@ -207,7 +209,7 @@ export default {
       return category ? category.description : 'Unknown'
     },
     showDetails(set) {
-      this.selectedSet = set
+      this.selectedSet = { ...set }
       this.showDetailsModal = true
     },
     openEditModal(set) {
@@ -241,10 +243,54 @@ export default {
         this.isLoading = false
       }
     },
-    deleteCard(cardId) {
-      // In a real application, this would delete the card from the database
-      console.log('Delete flashcard:', cardId)
-      alert(`Delete card functionality would go here (UI only)`)
+    async deleteCard(cardId) {
+      if (!cardId || !this.selectedSet) return
+
+      try {
+        this.isLoading = true
+        
+        // Call the API to delete the flashcard
+        await FlashcardService.deleteFlashcard(cardId)
+        
+        // Update the local state by removing the deleted card
+        if (this.selectedSet && this.selectedSet.flashcards) {
+          this.selectedSet.flashcards = this.selectedSet.flashcards.filter(card => card.id !== cardId)
+        }
+        
+        // Update the flashcard set in the main list if needed
+        const setIndex = this.flashcardSets.findIndex(set => set.id === this.selectedSet.id)
+        if (setIndex !== -1) {
+          const updatedSet = { ...this.flashcardSets[setIndex] }
+          if (updatedSet.flashcards) {
+            updatedSet.flashcards = updatedSet.flashcards.filter(card => card.id !== cardId)
+            this.flashcardSets.splice(setIndex, 1, updatedSet)
+          }
+        }
+      } catch (error) {
+        console.error(`Error deleting flashcard ${cardId}:`, error)
+        alert(`Failed to delete flashcard: ${error.message}`)
+      } finally {
+        this.isLoading = false
+      }
+    },
+    async handleCardAdded(newCard) {
+      if (!newCard || !this.selectedSet) return
+      
+      try {
+        // The card has already been added to selectedSet.flashcards in the modal component
+        // So we only need to update the flashcard set in the main list
+        const setIndex = this.flashcardSets.findIndex(set => set.id === this.selectedSet.id)
+        if (setIndex !== -1) {
+          const updatedSet = { ...this.flashcardSets[setIndex] }
+          if (!updatedSet.flashcards) {
+            updatedSet.flashcards = []
+          }
+          updatedSet.flashcards.push(newCard)
+          this.flashcardSets.splice(setIndex, 1, updatedSet)
+        }
+      } catch (error) {
+        console.error('Error handling newly added card:', error)
+      }
     },
     async handleCreateSubmit(newFlashcardSet) {
       try {
