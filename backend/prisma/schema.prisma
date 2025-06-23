@@ -99,13 +99,14 @@ model Community {
 
   // Relations
   members CommunityMember[]
-
+  posts   Post[]
   @@map("Community")
 }
 
 model CommunityMember {
   userId      String @map("user_id")
   communityId String @map("community_id")
+  status      String   @default("pending") 
 
   // Relations
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -126,8 +127,10 @@ model Post {
   reported  Boolean  @default(false)
   reportResolved Boolean  @default(false)
   moderationNote  String?
+  communityId String? @map("community_id")
   // Relations
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community? @relation(fields: [communityId], references: [id], onDelete: Cascade)
   likes    Like[]
   comments Comment[]
 
@@ -147,6 +150,7 @@ model Like {
 }
 
 model Comment {
+  id        String   @id @default(cuid())
   postId    String   @map("post_id")
   userId    String   @map("user_id")
   createdAt DateTime @default(now()) @map("created_at")
@@ -156,7 +160,6 @@ model Comment {
   post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@id([postId, userId])
   @@map("Comment")
 }
 

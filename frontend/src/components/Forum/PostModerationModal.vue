@@ -165,7 +165,7 @@ export default {
         const res = await fetch(`http://localhost:3000/api/admin/forum/moderate/${this.postId}/approve`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ moderationNotes : this.moderationNotes })
+          body: JSON.stringify({ notes : this.moderationNotes })
         });
         if (!res.ok) throw new Error('Failed to approve post');
         this.$emit('moderated', { action: 'approved', postId: this.postId, notes: this.moderationNotes });

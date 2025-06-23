@@ -1,51 +1,154 @@
 <template>
-  <div class="sidebar-left h-fit space-y-5">
-    <div class="filter-section bg-white rounded-xl shadow-sm p-4">
-      <div
-        class="filter-option flex items-center p-3 rounded-lg mb-2 cursor-pointer transition-all bg-blue-500 text-white">
-        <div class="filter-icon flex items-center justify-center w-6 h-6 rounded bg-white/20 text-white">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-          </svg>
-        </div>
-        <div class="filter-text ml-3">
-          <div class="filter-title-with-badge flex items-center">
-            <span class="filter-title text-sm font-semibold">All Posts</span>
-            <span class="badge ml-2 bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">12</span>
-          </div>
-          <span class="filter-subtitle text-xs opacity-90">See all forum posts</span>
-        </div>
-      </div>
-      <div class="filter-option flex items-center p-3 rounded-lg cursor-pointer transition-all hover:bg-gray-50">
-        <div class="filter-icon flex items-center justify-center w-6 h-6 rounded bg-gray-100 text-gray-700">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-          </svg>
-        </div>
-        <div class="filter-text ml-3">
-          <div class="filter-title-with-badge flex items-center"><span
-              class="filter-title text-sm font-semibold text-blue-500">Following</span>
-          </div>
-          <span class="filter-subtitle text-xs text-gray-500">Posts from people you follow</span>
-        </div>
-      </div>
+  <aside>
+    <h2 class="font-semibold mb-4">Joined Communities</h2>
+    <div class="flex flex-col gap-2 mb-4">
+      <!-- General Button -->
+      <button
+        :class="buttonClass(selectedCommunity && selectedCommunity.id === 'general')"
+        @click="selectCommunity({ id: 'general', name: 'General' })"
+      >
+        General
+      </button>
+      <!-- Community Buttons -->
+      <button
+        v-for="community in joinedCommunities"
+        :key="community.id"
+        :class="buttonClass(
+          selectedCommunity && selectedCommunity.id === community.id,
+          community.status
+        )"
+        :disabled="community.status !== 'accepted'"
+        @click="community.status === 'accepted' && selectCommunity(community)"
+      >
+        {{ community.name }}
+        <span
+          v-if="community.status === 'pending'"
+          class="ml-2 text-xs text-yellow-600 font-medium"
+        >
+          (Pending Approval)
+        </span>
+        <span
+          v-if="community.status === 'rejected'"
+          class="ml-2 text-xs text-red-600 font-medium"
+        >
+          (Rejected)
+        </span>
+      </button>
     </div>
+    <p
+      v-if="joinedCommunities.length == 0"
+      class="text-gray-500 mb-4"
+    >
+      No joined communities.
+    </p>
 
-    <div class="tags-section bg-white rounded-xl shadow-sm p-4">
-      <h3 class="section-title text-base font-semibold text-gray-800 mb-4">Popular Tags</h3>
-      <div class="tag-list space-y-2">
-        <div v-for="n in 5" :key="n" class="tag-item flex justify-between items-center py-2 border-b border-gray-100">
-          <span class="tag-name text-sm font-medium text-blue-500">#malaylanguage</span>
-          <span class="tag-count text-xs text-gray-500">{{ n * 123 }}</span>
-        </div>
-      </div>
-    </div>
-  </div>
+    <h2 class="font-semibold mt-6 mb-4">Available Communities</h2>
+    <ul v-if="availableCommunities.length">
+      <li
+        v-for="community in availableCommunities"
+        :key="community.id"
+        class="flex items-center justify-between mb-2"
+      >
+        <span>{{ community.name }}</span>
+        <button
+          @click="joinCommunity(community.id)"
+          class="ml-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          :disabled="isJoining.value"
+        >
+          Join
+        </button>
+      </li>
+    </ul>
+    <p v-else class="text-gray-500">
+      No communities available to join.
+    </p>
+  </aside>
 </template>
 
-<script>
-export default {
-  name: 'ForumSidebarLeft'
+<script setup>
+import { ref, onMounted, watch } from 'vue'
+
+const props = defineProps({
+  userId: {
+    type: String,
+    required: true
+  },
+  selectedCommunity: {
+    type: Object,
+    default: null
+  }
+})
+
+const joinedCommunities = ref([])
+const availableCommunities = ref([])
+const isJoining = ref(false)
+const emit = defineEmits(['community-selected'])
+
+const fetchCommunities = async () => {
+  if (!props.userId) return
+  // Fetch joined communities (with status)
+  let res = await fetch(`http://localhost:3000/api/community/joined?clerkUserId=${props.userId}`)
+  let data = await res.json()
+  // status can be 'accepted', 'pending', or possibly 'rejected'
+  joinedCommunities.value = (data.communities || []).map(comm => ({
+    ...comm,
+    status: comm.status || 'accepted' // fallback to 'accepted' if missing
+  }))
+  // Fetch available communities
+  res = await fetch(`http://localhost:3000/api/community/available?clerkUserId=${props.userId}`)
+  data = await res.json()
+  availableCommunities.value = data.communities || []
 }
+
+const joinCommunity = async (communityId) => {
+  if (isJoining.value) return
+  isJoining.value = true
+  try {
+    const res = await fetch('http://localhost:3000/api/community/join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        communityId,
+        clerkUserId: props.userId
+      })
+    })
+    if (!res.ok) {
+      const err = await res.json()
+      alert(err.error || 'Failed to join community')
+    }
+    await fetchCommunities()
+  } catch (e) {
+    alert('Network error: ' + e.message)
+  } finally {
+    isJoining.value = false
+  }
+}
+
+const selectCommunity = (community) => {
+  // Only allow selecting accepted communities
+  if (community.status === 'accepted' || !community.status) {
+    emit('community-selected', community)
+  }
+}
+
+// Styling class helper
+const buttonClass = (isActive, status = 'accepted') => {
+  const base =
+    "w-full text-left px-4 py-2 rounded font-semibold transition-colors focus:outline-none"
+  if (status === 'pending') {
+    return [base, "bg-yellow-100 text-yellow-700 cursor-not-allowed opacity-70"].join(" ")
+  }
+  if (status === 'rejected') {
+    return [base, "bg-red-100 text-red-700 cursor-not-allowed opacity-70"].join(" ")
+  }
+  return [
+    base,
+    isActive
+      ? "bg-blue-500 text-white shadow"
+      : "bg-gray-100 text-gray-700 hover:bg-blue-100 hover:text-blue-700"
+  ].join(" ")
+}
+
+onMounted(fetchCommunities)
+watch(() => props.userId, fetchCommunities)
 </script>

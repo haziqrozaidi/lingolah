@@ -4,6 +4,9 @@ import DashboardView from '../views/DashboardView.vue'
 import ReviewView from '../views/flashcard/ReviewView.vue'
 import ForumView from '@/views/Forum/ForumView.vue'
 import AdminForumView from '@/views/Forum/AdminForumView.vue'
+import AdminCommunityView from '@/views/Forum/CommunityCreateView.vue'
+import AdminCommunityRequest from '@/views/Forum/AdminCommunityRequest.vue'
+import AdminCommunityDeleteView from '@/views/Forum/AdminCommunityDeleteView.vue'
 import QuizesView from '@/views/quiz module/QuizesView.vue'
 import QuizView from '@/views/quiz module/QuizQuestionsView.vue'
 import VideoView from '../views/video/VideoView.vue'
@@ -37,6 +40,24 @@ const router = createRouter({
       path: '/admin/forum',
       name: 'admin-forum',
       component: AdminForumView,
+    },
+    {
+      path: '/admin/community',
+      name: 'admin-community',
+      component: AdminCommunityView,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/community/request',
+      name: 'admin-community-request',
+      component: AdminCommunityRequest,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/admin/community/delete',
+      name: 'admin-community-delete',
+      component: AdminCommunityDeleteView,
+      meta: { requiresAdmin: true }
     },
     {
       path: '/quizes',
