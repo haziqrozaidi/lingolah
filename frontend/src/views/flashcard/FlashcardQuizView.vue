@@ -11,6 +11,7 @@ const isFlipping = ref(false)
 const loading = ref(true)
 const error = ref(null)
 const setTitle = ref('')
+const showCompletionModal = ref(false)
 
 // Define props for component
 const props = defineProps({
@@ -47,6 +48,7 @@ const loadFlashcards = async (setId) => {
   try {
     loading.value = true
     error.value = null
+    showCompletionModal.value = false
     
     // Fetch the flashcard set to get its title
     const setData = await FlashcardSetService.getFlashcardSetById(setId)
@@ -101,14 +103,26 @@ const moveToNextCard = () => {
     if (currentCardIndex.value < flashcards.value.length - 1) {
       currentCardIndex.value++
     } else {
-      // End of session logic
-      // For now, we'll just display a completion message and loop back to first card
-      alert('Quiz completed!')
-      currentCardIndex.value = 0
+      // Show completion modal instead of alert
+      showCompletionModal.value = true
     }
     
     isFlipping.value = false
   }, 300)
+}
+
+// Function to restart quiz
+const restartQuiz = () => {
+  // Reset state
+  currentCardIndex.value = 0
+  isAnswerRevealed.value = false
+  showCompletionModal.value = false
+  
+  // Reset difficulty ratings
+  flashcards.value = flashcards.value.map(card => ({
+    ...card,
+    difficulty: null
+  }))
 }
 
 // Function to go back to the learn view
@@ -171,7 +185,7 @@ onMounted(() => {
 
       <!-- Flashcard -->
       <div 
-        v-if="currentFlashcard"
+        v-if="currentFlashcard && !showCompletionModal"
         class="bg-white border border-gray-200 rounded-2xl shadow-md h-64 flex items-center justify-center mb-8 perspective cursor-pointer"
         :class="{ 'animate-flip': isFlipping }"
         @click="!isAnswerRevealed && revealAnswer()"
@@ -194,8 +208,38 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Rating buttons (only shown when answer is revealed) -->
-      <div class="space-y-3 mb-6" v-if="isAnswerRevealed">
+      <!-- Completion Modal -->
+      <div v-if="showCompletionModal" class="mb-8">
+        <div class="bg-white border border-gray-200 rounded-2xl shadow-md p-8 text-center">
+          <div class="mb-4 text-green-500">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">Quiz Complete!</h2>
+          <p class="text-gray-600 mb-6">
+            You've completed the quiz for "{{ setTitle }}". 
+            What would you like to do next?
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              @click="restartQuiz"
+              class="px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700"
+            >
+              Restart Quiz
+            </button>
+            <button
+              @click="goBack"
+              class="px-6 py-3 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-100"
+            >
+              Exit
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Rating buttons (only shown when answer is revealed and not in completion modal) -->
+      <div class="space-y-3 mb-6" v-if="isAnswerRevealed && !showCompletionModal">
         <div class="grid grid-cols-3 gap-4">
           <button
             @click="rateCard(1)"
@@ -220,8 +264,8 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Reveal button (only shown when answer is not revealed) -->
-      <div class="mb-6" v-if="!isAnswerRevealed">
+      <!-- Reveal button (only shown when answer is not revealed and not in completion modal) -->
+      <div class="mb-6" v-if="!isAnswerRevealed && !showCompletionModal">
         <button
           @click="revealAnswer"
           class="w-full py-4 px-6 rounded-xl text-center transition-all border font-medium text-lg bg-blue-600 text-white hover:bg-blue-700"
@@ -231,7 +275,7 @@ onMounted(() => {
       </div>
 
       <!-- Back button -->
-      <div class="mt-6 text-center">
+      <div class="mt-6 text-center" v-if="!showCompletionModal">
         <button
           @click="goBack"
           class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100"
@@ -241,7 +285,7 @@ onMounted(() => {
       </div>
 
       <!-- Mini tutorial hint -->
-      <div class="mt-10 text-center text-sm text-gray-500">
+      <div class="mt-10 text-center text-sm text-gray-500" v-if="!showCompletionModal">
         <p v-if="!isAnswerRevealed">Tap card or click "Reveal Answer" to see the answer</p>
         <p v-else>Rate how well you knew this card to continue</p>
       </div>
