@@ -53,8 +53,8 @@ const router = createRouter({
       component: YoutubeLooper,
     },
     {
-      path: '/admin/videos',
-      name: 'admin-videos',
+      path: '/admin/video',
+      name: 'admin-video',
       component: AdminVideoView,
     },
   ],
