@@ -2,6 +2,11 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { FlashcardService } from '@/services/flashcardService'
 import { FlashcardSetService } from '@/services/flashcardSetService'
+import { ProgressService } from '@/services/progressService'
+import { useUserStore } from '@/stores/userStore'
+
+// Get user store
+const userStore = useUserStore()
 
 // State variables
 const flashcards = ref([])
@@ -12,6 +17,8 @@ const loading = ref(true)
 const error = ref(null)
 const setTitle = ref('')
 const showCompletionModal = ref(false)
+const progressUpdating = ref(false)
+const authError = ref(null)
 
 // Define props for component
 const props = defineProps({
@@ -41,6 +48,11 @@ const currentFlashcard = computed(() => {
 const progressPercentage = computed(() => {
   if (flashcards.value.length === 0) return 0
   return Math.round((currentCardIndex.value / flashcards.value.length) * 100)
+})
+
+// Check if user is authenticated
+const isAuthenticated = computed(() => {
+  return userStore.isUserLoaded && userStore.userId
 })
 
 // Load flashcards for the given set ID
@@ -84,12 +96,38 @@ const revealAnswer = () => {
 }
 
 // Function to rate card difficulty and move to next
-const rateCard = (difficulty) => {
+const rateCard = async (difficulty) => {
+  // Check if user is authenticated
+  if (!isAuthenticated.value) {
+    authError.value = 'You must be logged in to save your progress.'
+    // Still continue and move to next card, but don't save progress
+    flashcards.value[currentCardIndex.value].difficulty = difficulty
+    moveToNextCard()
+    return
+  }
+
   // Save the difficulty rating
   flashcards.value[currentCardIndex.value].difficulty = difficulty
+  progressUpdating.value = true
+  authError.value = null
   
-  // Move to next card or end session
-  moveToNextCard()
+  try {
+    // Update progress in the backend based on difficulty
+    await ProgressService.updateFlashcardProgress(
+      currentFlashcard.value.id, 
+      difficulty
+    )
+  } catch (err) {
+    console.error('Error updating flashcard progress:', err)
+    if (err.message === 'User not authenticated') {
+      authError.value = 'You must be logged in to save your progress.'
+    }
+    // Continue anyway, don't block the user experience
+  } finally {
+    progressUpdating.value = false
+    // Move to next card or end session
+    moveToNextCard()
+  }
 }
 
 // Function to move to the next card
@@ -117,6 +155,7 @@ const restartQuiz = () => {
   currentCardIndex.value = 0
   isAnswerRevealed.value = false
   showCompletionModal.value = false
+  authError.value = null
   
   // Reset difficulty ratings
   flashcards.value = flashcards.value.map(card => ({
@@ -169,6 +208,18 @@ onMounted(() => {
       <!-- Set title display -->
       <h1 class="text-2xl font-bold text-center mb-6">{{ setTitle }}</h1>
 
+      <!-- Authentication warning if not logged in -->
+      <div v-if="!isAuthenticated" class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+        <p class="text-yellow-700">
+          <span class="font-bold">Not logged in:</span> Your progress won't be saved. Please log in to track your learning.
+        </p>
+      </div>
+
+      <!-- Auth error display -->
+      <div v-if="authError" class="bg-amber-50 border-l-4 border-amber-400 p-4 mb-6">
+        <p class="text-amber-700">{{ authError }}</p>
+      </div>
+
       <!-- Progress bar -->
       <div class="mb-6">
         <div class="w-full bg-gray-200 rounded-full h-2.5">
@@ -219,7 +270,8 @@ onMounted(() => {
           <h2 class="text-2xl font-bold text-gray-900 mb-2">Quiz Complete!</h2>
           <p class="text-gray-600 mb-6">
             You've completed the quiz for "{{ setTitle }}". 
-            What would you like to do next?
+            <span v-if="isAuthenticated">Your progress has been saved and the review schedule has been updated based on your responses.</span>
+            <span v-else>Please log in to save your progress for future study sessions.</span>
           </p>
           <div class="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -243,21 +295,24 @@ onMounted(() => {
         <div class="grid grid-cols-3 gap-4">
           <button
             @click="rateCard(1)"
-            class="py-4 px-3 rounded-xl text-center transition-all border font-medium text-lg bg-red-50 border-red-200 text-red-700 hover:bg-red-100"
+            :disabled="progressUpdating"
+            class="py-4 px-3 rounded-xl text-center transition-all border font-medium text-lg bg-red-50 border-red-200 text-red-700 hover:bg-red-100 disabled:opacity-50"
           >
             Hard
           </button>
           
           <button
             @click="rateCard(2)"
-            class="py-4 px-3 rounded-xl text-center transition-all border font-medium text-lg bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
+            :disabled="progressUpdating"
+            class="py-4 px-3 rounded-xl text-center transition-all border font-medium text-lg bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100 disabled:opacity-50"
           >
             Good
           </button>
           
           <button
             @click="rateCard(3)"
-            class="py-4 px-3 rounded-xl text-center transition-all border font-medium text-lg bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+            :disabled="progressUpdating"
+            class="py-4 px-3 rounded-xl text-center transition-all border font-medium text-lg bg-green-50 border-green-200 text-green-700 hover:bg-green-100 disabled:opacity-50"
           >
             Easy
           </button>
