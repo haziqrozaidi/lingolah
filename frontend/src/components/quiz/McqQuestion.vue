@@ -30,7 +30,7 @@
           @click="selectOption(index)"
         >
           <span class="option-letter">{{ String.fromCharCode(65 + index) }}</span>
-          <span class="option-text">{{ option }}</span>
+          <span class="option-text">{{ option.text }}</span>
         </div>
       </div>
     </div>
@@ -90,13 +90,16 @@ export default {
     },
     options: {
       type: Array,
-      default: () => ['Option 1', 'Option 2', 'Option 3', 'Option 4'],
+      default: () => [],
+    },
+    disabled: {
+      type: Boolean,
+      default: false,
     },
   },
+  emits: ['answer', 'favorite-toggled', 'question-reported'],
   data() {
     return {
-      userAnswer: '',
-      // options: ['was cooking', 'cooked', 'was cooking', 'had cooked'],
       selectedOption: null,
       showReportPopup: false,
       isFavorite: false,
@@ -113,27 +116,27 @@ export default {
   },
   methods: {
     selectOption(index) {
+      if (this.disabled) return
       this.selectedOption = index
-      this.$emit('answer-selected', index)
+      this.$emit('answer', this.options[index].text)
     },
     toggleFavorite() {
       this.isFavorite = !this.isFavorite
-      this.$emit('favorite-toggled', this.isFavorite)
+      this.$emit('favorite-toggled', {
+        isFavorite: this.isFavorite,
+        timestamp: new Date().toISOString(),
+      })
     },
-
     submitReport() {
       const reportData = {
         option: this.selectedReportOption,
         customReason: this.customReportReason,
         timestamp: new Date().toISOString(),
       }
-
       this.$emit('question-reported', reportData)
       this.showReportPopup = false
       this.selectedReportOption = null
       this.customReportReason = ''
-
-      // Show success message
       alert('Thank you for your report! We will review this question.')
     },
   },

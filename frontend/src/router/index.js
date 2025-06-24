@@ -46,19 +46,25 @@ const router = createRouter({
       path: '/admin/community',
       name: 'admin-community',
       component: AdminCommunityView,
-      meta: { requiresAdmin: true }
+      meta: { requiresAdmin: true },
     },
     {
       path: '/admin/community/request',
       name: 'admin-community-request',
       component: AdminCommunityRequest,
-      meta: { requiresAdmin: true }
+      meta: { requiresAdmin: true },
     },
     {
       path: '/admin/community/delete',
       name: 'admin-community-delete',
       component: AdminCommunityDeleteView,
-      meta: { requiresAdmin: true }
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/quizes',
+      name: 'admin-quizes',
+      component: QuizesView,
+      meta: { requiresAdmin: true },
     },
     {
       path: '/quizes',
@@ -69,7 +75,7 @@ const router = createRouter({
       path: '/quiz/:quizId',
       name: 'quiz',
       component: QuizView,
-      props: true
+      props: true,
     },
     {
       path: '/video',
@@ -90,8 +96,8 @@ const router = createRouter({
       path: '/admin',
       name: 'admin-dashboard',
       component: AdminDashboard,
-      meta: { requiresAdmin: true }
-    }
+      meta: { requiresAdmin: true },
+    },
   ],
 })
 

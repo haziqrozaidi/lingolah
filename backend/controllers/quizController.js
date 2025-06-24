@@ -1,4 +1,4 @@
-const { PrismaClient } = require('../generated/prisma');
+const { PrismaClient } = require("../generated/prisma");
 const prisma = new PrismaClient();
 
 /**
@@ -8,13 +8,13 @@ exports.getAllQuizzes = async () => {
   const quizzes = await prisma.quiz.findMany({
     include: {
       user: {
-        select: { id: true, username: true }
+        select: { id: true, username: true },
       },
       questions: {
-        include: { choices: true }
-      }
+        include: { choices: true, matchPairs: true },
+      },
     },
-    orderBy: { id: 'asc' }
+    orderBy: { id: "asc" },
   });
 
   return quizzes.map(formatQuiz);
@@ -28,12 +28,12 @@ exports.getQuizById = async (id) => {
     where: { id },
     include: {
       user: {
-        select: { id: true, username: true }
+        select: { id: true, username: true },
       },
       questions: {
-        include: { choices: true }
-      }
-    }
+        include: { choices: true, matchPairs: true },
+      },
+    },
   });
 
   if (!quiz) return null;
@@ -46,7 +46,7 @@ exports.getQuizById = async (id) => {
  */
 exports.createQuiz = async (quizData) => {
   const existingUser = await prisma.user.findUnique({
-    where: { id: quizData.userId }
+    where: { id: quizData.userId },
   });
 
   if (!existingUser) {
@@ -56,18 +56,17 @@ exports.createQuiz = async (quizData) => {
   const newQuiz = await prisma.quiz.create({
     data: {
       title: quizData.title,
-      description: quizData.description || '',
+      description: quizData.description || "",
       userId: quizData.userId,
       difficulty: quizData.difficulty,
-      type: quizData.type
-
+      type: quizData.type,
     },
     include: {
       user: {
-        select: { id: true, username: true }
+        select: { id: true, username: true },
       },
-      questions: true
-    }
+      questions: true,
+    },
   });
 
   return formatQuiz(newQuiz);
@@ -78,7 +77,7 @@ exports.createQuiz = async (quizData) => {
  */
 exports.addQuestionToQuiz = async (quizId, questionData) => {
   const existingQuiz = await prisma.quiz.findUnique({
-    where: { id: quizId }
+    where: { id: quizId },
   });
 
   if (!existingQuiz) {
@@ -90,11 +89,12 @@ exports.addQuestionToQuiz = async (quizId, questionData) => {
       quizId: quizId,
       type: questionData.type,
       question: questionData.question,
-      order: questionData.order || 0
+      correctAnswer: questionData.correctAnswer || "",
+      order: questionData.order || 0,
     },
     include: {
-      choices: true
-    }
+      choices: true,
+    },
   });
 
   return formatQuestion(newQuestion);
@@ -105,7 +105,7 @@ exports.addQuestionToQuiz = async (quizId, questionData) => {
  */
 exports.addChoiceToQuestion = async (questionId, choiceData) => {
   const existingQuestion = await prisma.quizQuestion.findUnique({
-    where: { id: questionId }
+    where: { id: questionId },
   });
 
   if (!existingQuestion) {
@@ -116,8 +116,8 @@ exports.addChoiceToQuestion = async (questionId, choiceData) => {
     data: {
       questionId: questionId,
       text: choiceData.text,
-      isCorrect: choiceData.isCorrect
-    }
+      isCorrect: choiceData.isCorrect,
+    },
   });
 
   return newChoice;
@@ -128,7 +128,7 @@ exports.addChoiceToQuestion = async (questionId, choiceData) => {
  */
 exports.deleteQuiz = async (id) => {
   const existingQuiz = await prisma.quiz.findUnique({
-    where: { id }
+    where: { id },
   });
 
   if (!existingQuiz) {
@@ -136,10 +136,79 @@ exports.deleteQuiz = async (id) => {
   }
 
   await prisma.quiz.delete({
-    where: { id }
+    where: { id },
   });
 
   return true;
+};
+
+/**
+ * Add or update a quiz attempt for a user
+ * If an attempt exists for the user and quiz, update the result; otherwise, create a new attempt.
+ */
+exports.addOrUpdateQuizAttempt = async (userId, quizId, result) => {
+  // Verify user exists
+  const userExists = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!userExists) {
+    throw new Error(`User with ID ${userId} not found`);
+  }
+
+  // Verify quiz exists
+  const quizExists = await prisma.quiz.findUnique({
+    where: { id: quizId },
+  });
+
+  if (!quizExists) {
+    throw new Error(`Quiz with ID ${quizId} not found`);
+  }
+  const existingAttempt = await prisma.quizAttempt.findFirst({
+    where: {
+      userId,
+      quizId,
+    },
+  });
+
+  if (existingAttempt) {
+    // Update the existing attempt
+    const updatedAttempt = await prisma.quizAttempt.update({
+      where: { id: existingAttempt.id },
+      data: { result },
+    });
+    return updatedAttempt;
+  } else {
+    // Create a new attempt
+    const newAttempt = await prisma.quizAttempt.create({
+      data: {
+        userId,
+        quizId,
+        result,
+        completedAt: new Date(),
+      },
+    });
+    return newAttempt;
+  }
+};
+
+/**
+ * Get all quiz attempts for a quiz (optionally filtered by user)
+ */
+exports.getQuizAttempts = async (quizId, userId = null) => {
+  const where = { quizId };
+  if (userId) where.userId = userId;
+
+  const attempts = await prisma.quizAttempt.findMany({
+    where,
+    include: {
+      user: { select: { id: true, username: true } },
+      quiz: { select: { id: true, title: true } },
+    },
+    orderBy: { completedAt: "desc" },
+  });
+
+  return attempts;
 };
 
 /**
@@ -153,7 +222,7 @@ function formatQuiz(quiz) {
     user: quiz.user,
     difficulty: quiz.difficulty,
     type: quiz.type,
-    questions: quiz.questions.map(formatQuestion)
+    questions: quiz.questions.map(formatQuestion),
   };
 }
 
@@ -166,6 +235,8 @@ function formatQuestion(question) {
     type: question.type,
     question: question.question,
     order: question.order,
-    choices: question.choices || []
+    correctAnswer: question.correctAnswer,
+    choices: question.choices || [],
+    matchPairs: question.matchPairs || [],
   };
 }

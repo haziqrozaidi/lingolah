@@ -4,6 +4,7 @@ import { ref } from 'vue'
 export const useUserStore = defineStore('user', () => {
   // State
   const userId = ref(null)
+  const localUserId = ref(null) // This can be used to store a local user ID if needed
   const username = ref(null)
   const email = ref(null)
   const role = ref(null)
@@ -61,6 +62,8 @@ export const useUserStore = defineStore('user', () => {
       }
 
       console.log('User data sent successfully')
+      const data = await response.json()
+      localUserId.value = data.user.id 
     } catch (error) {
       console.error('Failed to sync user data with backend:', error)
     }
@@ -69,6 +72,7 @@ export const useUserStore = defineStore('user', () => {
   return {
     // State
     userId,
+    localUserId,
     username,
     email,
     role,

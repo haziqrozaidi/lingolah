@@ -33,6 +33,7 @@
             :difficulty="quiz.difficulty"
             :type="quiz.type"
             :question-count="quiz.questions.length"
+            :quiz-id="quiz.id"
             @click="startQuiz(quiz.id)"
           />
         </div>
@@ -50,6 +51,7 @@
             :difficulty="quiz.difficulty"
             :type="quiz.type"
             :question-count="quiz.questions.length"
+            :quiz-id="quiz.id"
             @click="startQuiz(quiz.id)"
           />
         </div>
@@ -67,6 +69,7 @@
             :difficulty="quiz.difficulty"
             :type="quiz.type"
             :question-count="quiz.questions.length"
+            :quiz-id="quiz.id"
             @click="startQuiz(quiz.id)"
           />
         </div>
