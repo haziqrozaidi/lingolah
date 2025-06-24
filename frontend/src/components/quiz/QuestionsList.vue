@@ -29,7 +29,6 @@ export default {
   data() {
     return {
       isExpanded: false,
-      initialCount: this.questionNumber > 12 ? 12 : this.questionNumber,
     }
   },
   computed: {
@@ -37,6 +36,9 @@ export default {
       return this.isExpanded
         ? Array.from({ length: this.questionNumber }, (_, i) => i + 1)
         : Array.from({ length: this.initialCount }, (_, i) => i + 1)
+    },
+    initialCount() {
+      return Math.min(this.questionNumber, 12)
     },
   },
   methods: {

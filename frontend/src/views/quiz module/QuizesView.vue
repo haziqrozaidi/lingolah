@@ -83,6 +83,9 @@ import { ref, computed, onMounted } from 'vue'
 import QuizCard from '@/components/quiz/QuizCard.vue'
 import QuizModal from '@/components/quiz/QuizModal.vue'
 import { QuizService } from '@/services/quizService' // import your service
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
 
 const quizzes = ref([])
 const loading = ref(true)
@@ -114,9 +117,11 @@ const advancedQuizzes = computed(() => quizzes.value.filter((q) => q.difficulty 
 
 // Start quiz
 const startQuiz = (quizId) => {
-  activeQuiz.value = quizId
-}
+  router.push({ name: 'quiz', params: { quizId: quizId } })
 
+  // Alternatively, you can set activeQuiz to open a modal
+  // activeQuiz.value = quizId
+}
 // Load on mount
 onMounted(() => {
   loadQuizzes()
