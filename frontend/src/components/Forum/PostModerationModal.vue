@@ -25,6 +25,7 @@
               <div v-if="reportDetails">
                 <p><strong>Reported by:</strong> {{ reportDetails.reporter?.username || 'N/A' }}</p>
                 <p><strong>Reason:</strong> {{ reportDetails.reason || 'N/A' }}</p>
+                <p><strong>Detail:</strong> {{ reportDetails.details || 'N/A' }}</p>
                 <p><strong>Date reported:</strong> {{ formatDate(reportDetails.dateReported) }}</p>
               </div>
               <p v-if="reportedPost.reportResolved" class="text-green-700 font-semibold mt-2">
