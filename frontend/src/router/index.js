@@ -6,7 +6,7 @@ import ForumView from '../views/ForumView.vue'
 import QuizesView from '@/views/quiz module/QuizesView.vue'
 import QuizView from '@/views/quiz module/QuizQuestionsView.vue'
 import VideoView from '../views/video/VideoView.vue'
-import YoutubeLooper from '@/views/video/YoutubeLooper.vue'
+import YoutubeLooper from '../views/video/YoutubeLooper.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -49,7 +49,7 @@ const router = createRouter({
     {
       path: '/video/looper',
       name: 'youtube-looper',
-      component: YoutubeLooper,
+      component: YoutubeLooper
     }
   ],
 })

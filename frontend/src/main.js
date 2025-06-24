@@ -29,6 +29,6 @@ app.use(PrimeVue, {
 })
 app.use(clerkPlugin, { publishableKey: PUBLISHABLE_KEY })
 app.use(VuePlyr, {
-   plyr: {}
+  plyr: {}
 })
 app.mount('#app')

@@ -1,6 +1,8 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const videos = ref([]) 
 const searchQuery = ref('')
 // Nouvel état pour suivre les catégories développées
@@ -54,9 +56,24 @@ const getVisibleVideos = (category) => {
   return category.videos.slice(0, 4)
 }
 
-// Function to play a video (adapt as needed)
+// Fonction pour lancer la vidéo dans le YoutubeLooper
 const playVideo = (videoId) => {
-  console.log(`Playing video with ID: ${videoId}`)
+  // Récupérer la vidéo correspondante
+  const video = videos.value.find(v => v.video_id === videoId)
+  
+  // Extraire l'ID YouTube de l'URL
+  // Par exemple: https://www.youtube.com/watch?v=RLUGJFuvvDc
+  const youtubeId = video?.url?.split('v=')[1]?.split('&')[0]
+  
+  if (youtubeId) {
+    // Rediriger vers le YoutubeLooper avec l'ID YouTube en paramètre
+    router.push({
+      name: 'youtube-looper',
+      query: { id: youtubeId }
+    })
+  } else {
+    console.error('Impossible d\'extraire l\'ID YouTube de la vidéo:', video)
+  }
 }
 </script>
 
@@ -116,11 +133,11 @@ const playVideo = (videoId) => {
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           <div
             v-for="video in getVisibleVideos(category)"
-            :key="video.id"
+            :key="video.video_id"
             class="video-card rounded-lg overflow-hidden shadow-md bg-white hover:shadow-lg transition-shadow duration-300"
           >
             <!-- Thumbnail with Play Button Overlay -->
-            <div class="relative group cursor-pointer" @click="playVideo(video.id)">
+            <div class="relative group cursor-pointer" @click="playVideo(video.video_id)">
               <img :src="video.thumbnail" :alt="video.title" class="w-full h-44 object-cover" />
               <div
                 class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -155,7 +172,7 @@ const playVideo = (videoId) => {
                   {{ video.difficulty }}
                 </span>
                 <button
-                  @click="playVideo(video.id)"
+                  @click.stop="playVideo(video.video_id)"
                   class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
                 >
                   Watch <i class="pi pi-caret-right ml-1"></i>
