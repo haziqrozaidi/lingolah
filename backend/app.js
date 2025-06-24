@@ -18,6 +18,8 @@ var adminDashboard = require('./routes/adminDashboard');
 
 var app = express();
 
+app.use('/api/community', communityRouter);
+app.use('/api/admin/forum', adminForumRouter);
 app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
@@ -30,8 +32,6 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/api/clerk-user', clerkUserRouter);
 app.use('/api/forum', forumRouter);
-app.use('/api/admin/forum', adminForumRouter);
-app.use('/api/community', communityRouter);
 app.use('/flashcard-sets', flashcardSetsRouter);
 app.use('/flashcards', flashcardRoutes);
 app.use('/api/admin', adminDashboard);
