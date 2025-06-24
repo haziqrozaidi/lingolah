@@ -4,8 +4,8 @@ import 'primeicons/primeicons.css'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { clerkPlugin } from '@clerk/vue'
-import PrimeVue from 'primevue/config'
-import Noir from './presets/Noir.js'
+// import PrimeVue from 'primevue/config'
+// import Noir from './presets/Noir.js'
 
 import App from './App.vue'
 import router from './router'
@@ -20,11 +20,11 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-app.use(PrimeVue, {
-  theme: {
-    preset: Noir,
-  },
-})
+// app.use(PrimeVue, {
+//   theme: {
+//     preset: Noir,
+//   },
+// })
 app.use(clerkPlugin, { publishableKey: PUBLISHABLE_KEY })
 
 app.mount('#app')
