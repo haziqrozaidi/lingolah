@@ -54,6 +54,7 @@ export default {
       });
       this.form = { title: '', content: '', category: '' };
       this.$emit('post-created');
+      this.$emit('cancel');
     }
   }
 }

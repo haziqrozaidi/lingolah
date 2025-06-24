@@ -8,11 +8,18 @@
         <li v-for="post in pending" :key="post.id" class="border rounded p-4 mb-3 flex justify-between items-center">
           <div>
             <div class="font-semibold">{{ post.title }}</div>
-            <div class="text-sm text-gray-600">Reported by: {{ post.reportedBy || 'N/A' }} | Reason: {{ post.reportReason || 'N/A' }}</div>
-            <div class="text-xs text-gray-500">Author: {{ post.user?.username || 'Unknown' }} | Date: {{ formatDate(post.reportDate) }}</div>
+            <!-- Show report details if loaded -->
+            <div v-if="reportDetailsMap[post.id]" class="text-sm text-amber-700">
+              <span>Reported by: {{ reportDetailsMap[post.id].reporter?.username || 'N/A' }}</span>
+              <span> | Reason: {{ reportDetailsMap[post.id].reason || 'N/A' }}</span>
+              <span> | Date: {{ formatDate(reportDetailsMap[post.id].dateReported) }}</span>
+            </div>
+            <div v-else class="text-sm text-amber-700">
+              <span>Report details loading...</span>
+            </div>
+            <div class="text-xs text-gray-500">Author: {{ post.user?.username || 'Unknown' }}</div>
           </div>
-          <button
-            class="ml-4 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
+          <button class="ml-4 px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600"
             @click="openModal(post.id)">
             Moderate
           </button>
@@ -20,34 +27,19 @@
       </ul>
     </section>
     <section class="mt-10">
-      <h2 class="text-lg font-semibold mb-2">Resolved Reported Posts</h2>
-      <div v-if="resolved.length === 0" class="mb-4 text-gray-500">No resolved reports yet.</div>
-      <ul>
-        <li v-for="post in resolved" :key="post.id" class="border rounded p-4 mb-3">
-          <div class="font-semibold">{{ post.title }}</div>
-          <div class="text-xs text-gray-500">Author: {{ post.user?.username || 'Unknown' }}</div>
-          <div class="text-xs text-gray-500">Resolved: {{ formatDate(post.reportDate) }}</div>
-          <div class="text-xs text-gray-500">Moderator Notes: {{ post.moderationNotes || 'None' }}</div>
-          <div class="text-xs text-gray-500">Status: {{ post.status || 'resolved' }}</div>
-        </li>
-      </ul>
+      <ResolvedReportsSection />
     </section>
     <!-- Modal -->
-    <PostModerationModal
-      :show="modal.show"
-      :postId="modal.postId"
-      @close="closeModal"
-      @moderated="onModerated"
-    />
+    <PostModerationModal :show="modal.show" :postId="modal.postId" @close="closeModal" @moderated="onModerated" />
   </div>
 </template>
 
 <script>
 import PostModerationModal from '@/components/Forum/PostModerationModal.vue';
-
+import ResolvedReportsSection from '@/components/Forum/ResolvedReportSection.vue';
 export default {
   name: 'ForumModerationPage',
-  components: { PostModerationModal },
+  components: { PostModerationModal, ResolvedReportsSection },
   data() {
     return {
       pending: [],
@@ -56,6 +48,7 @@ export default {
         show: false,
         postId: null,
       },
+      reportDetailsMap: {}, // Map postId to report details
     };
   },
   mounted() {
@@ -69,6 +62,27 @@ export default {
       ]);
       this.pending = pending;
       this.resolved = resolved;
+
+      // Fetch report details for all posts (pending & resolved)
+      const allPosts = [...pending, ...resolved];
+      await this.fetchAllReportDetails(allPosts);
+    },
+    async fetchAllReportDetails(posts) {
+      // For each post, fetch its report details and store in reportDetailsMap
+      const promises = posts.map(async post => {
+        try {
+          const res = await fetch(`http://localhost:3000/api/admin/forum/posts/${post.id}/report`);
+          if (res.ok) {
+            const details = await res.json();
+            this.reportDetailsMap[post.id] = details;
+          } else {
+            this.reportDetailsMap[post.id] = { reason: 'N/A', reporter: { username: 'N/A' }, dateReported: null };
+          }
+        } catch (e) {
+          this.reportDetailsMap[post.id] = { reason: 'N/A', reporter: { username: 'N/A' }, dateReported: null };
+        }
+      });
+      await Promise.all(promises);
     },
     openModal(postId) {
       this.modal.show = true;
@@ -92,9 +106,9 @@ export default {
     formatDate(dateString) {
       if (!dateString) return '';
       const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
