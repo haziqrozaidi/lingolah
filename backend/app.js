@@ -16,6 +16,7 @@ var communityRouter = require('./routes/community');
 const flashcardRoutes = require('./routes/flashcards');
 var adminDashboard = require('./routes/adminDashboard'); 
 var quizRouter = require('./routes/quiz');
+const progressRoutes = require('./routes/progress');
 
 var app = express();
 
@@ -37,5 +38,6 @@ app.use('/api/quizzes', quizRouter);
 app.use('/flashcard-sets', flashcardSetsRouter);
 app.use('/flashcards', flashcardRoutes);
 app.use('/api/admin', adminDashboard);
+app.use('/progress', progressRoutes);
 
 module.exports = app;

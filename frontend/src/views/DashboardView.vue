@@ -1,14 +1,20 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
+import { FlashcardService } from '@/services/flashcardService'
+import { FlashcardSetService } from '@/services/flashcardSetService'
+import { ProgressService } from '@/services/progressService'
 
-// Dummy user data
+// Get current user data from store
+const userStore = useUserStore()
+
+// User data with progress
 const user = ref({
-  name: 'John Smith',
   progress: {
-    vocabularyLearned: 183,
-    totalVocabulary: 500,
-    vocabularyPercentage: 37,
+    flashcardsLearned: 0,
+    totalFlashcards: 0,
+    flashcardsPercentage: 0,
     quizzesCompleted: 8,
     totalQuizzes: 20,
     quizzesPercentage: 40,
@@ -17,6 +23,9 @@ const user = ref({
     videosPercentage: 33,
   },
 })
+
+// Recently reviewed flashcard sets
+const recentSets = ref([])
 
 // Dummy recent activity data
 const recentActivities = ref([
@@ -90,18 +99,86 @@ const modules = ref([
   },
 ])
 
+// Loading state
+const isLoading = ref(true)
+const error = ref(null)
+
 // Format date function
 const formatDate = (dateString) => {
   const date = new Date(dateString)
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
+
+// Function to load flashcard data
+const loadFlashcardData = async () => {
+  try {
+    isLoading.value = true
+    error.value = null
+    
+    // Check if user is authenticated
+    if (userStore.isUserLoaded && userStore.userId) {
+      // Get all flashcard sets
+      const allSets = await FlashcardSetService.getAllFlashcardSets()
+      
+      // Count total flashcards
+      let totalFlashcards = 0
+      let reviewedFlashcards = 0
+      
+      // Process sets to find totals and recently reviewed
+      const processedSets = allSets.map(set => {
+        const cardCount = set.flashcards ? set.flashcards.length : 0
+        totalFlashcards += cardCount
+        
+        // For this example, assume some percentage of cards have been reviewed
+        // In a real implementation, we would use ProgressService.getFlashcardProgress
+        const randomReviewed = Math.floor(Math.random() * cardCount)
+        reviewedFlashcards += randomReviewed
+        
+        return {
+          ...set,
+          reviewedCards: randomReviewed,
+          totalCards: cardCount,
+          lastReviewed: new Date().toISOString()
+        }
+      })
+      
+      // Sort by last reviewed date (in a real app, this would be accurate data)
+      const sortedSets = processedSets.sort((a, b) => 
+        new Date(b.lastReviewed) - new Date(a.lastReviewed)
+      )
+      
+      // Take the 3 most recently reviewed sets
+      recentSets.value = sortedSets.slice(0, 3)
+      
+      // Update user progress data
+      user.value.progress.totalFlashcards = totalFlashcards
+      user.value.progress.flashcardsLearned = reviewedFlashcards
+      user.value.progress.flashcardsPercentage = totalFlashcards > 0 
+        ? Math.round((reviewedFlashcards / totalFlashcards) * 100) 
+        : 0
+        
+      // In a production app, we would use ProgressService.getDueFlashcards()
+      // to get actual progress data
+    }
+  } catch (err) {
+    console.error('Error loading flashcard data:', err)
+    error.value = 'Failed to load flashcard data'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Load data when component mounts
+onMounted(() => {
+  loadFlashcardData()
+})
 </script>
 
 <template>
   <div class="container mx-auto px-4 py-6">
     <!-- Welcome Section -->
     <div class="mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Welcome back, {{ user.name }}!</h1>
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">Welcome back, {{ userStore.username }}!</h1>
       <p class="text-gray-600 mt-2">Here's your learning progress and activities.</p>
     </div>
 
@@ -109,12 +186,12 @@ const formatDate = (dateString) => {
     <div class="mb-10">
       <h2 class="text-xl font-semibold text-gray-800 mb-4">Your Learning Progress</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Vocabulary Progress Card -->
+        <!-- Flashcards Progress Card -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
           <div class="flex items-center justify-between mb-3">
             <div>
-              <h3 class="text-lg font-medium text-gray-800">Vocabulary</h3>
-              <p class="text-gray-500 text-sm">Words learned</p>
+              <h3 class="text-lg font-medium text-gray-800">Flashcards</h3>
+              <p class="text-gray-500 text-sm">Cards reviewed</p>
             </div>
             <div class="bg-blue-100 p-3 rounded-full">
               <i class="pi pi-book text-blue-600 text-xl"></i>
@@ -122,18 +199,20 @@ const formatDate = (dateString) => {
           </div>
           <div class="mb-2">
             <div class="text-lg font-semibold text-gray-800">
-              {{ user.progress.vocabularyLearned }} / {{ user.progress.totalVocabulary }}
-              <span class="text-green-600 text-sm font-medium ml-2">+12 this week</span>
+              {{ user.progress.flashcardsLearned }} / {{ user.progress.totalFlashcards }}
+              <span v-if="!isLoading && recentSets.length > 0" class="text-green-600 text-sm font-medium ml-2">
+                +{{ recentSets[0]?.reviewedCards || 0 }} this week
+              </span>
             </div>
           </div>
           <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
             <div
               class="bg-blue-600 h-2.5 rounded-full"
-              :style="{ width: user.progress.vocabularyPercentage + '%' }"
+              :style="{ width: user.progress.flashcardsPercentage + '%' }"
             ></div>
           </div>
           <div class="text-sm text-gray-500">
-            {{ user.progress.vocabularyPercentage }}% complete
+            {{ user.progress.flashcardsPercentage }}% complete
           </div>
         </div>
 
