@@ -5,7 +5,6 @@ import { useRouter } from 'vue-router'
 const router = useRouter()
 const videos = ref([]) 
 const searchQuery = ref('')
-// Nouvel état pour suivre les catégories développées
 const expandedCategories = ref({})
 
 // Fetch all videos from the API
@@ -18,11 +17,20 @@ onMounted(async () => {
 const videoCategories = computed(() => {
   const categories = {}
   videos.value.forEach(video => {
+    // Extract YouTube ID from the URL
+    const youtubeId = video.url?.split('v=')[1]?.split('&')[0]
+
+    // Add YouTube thumbnail
+    const videoWithThumbnail = {
+      ...video,
+      thumbnail: youtubeId ? `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg` : null
+    }
+    
     const topic = video.topic || 'Other'
     if (!categories[topic]) categories[topic] = []
-    categories[topic].push(video)
+    categories[topic].push(videoWithThumbnail)
   })
-  // Returns an array of objects { title, videos }
+  
   return Object.entries(categories).map(([title, videos]) => ({ title, videos }))
 })
 
@@ -41,32 +49,31 @@ const filteredCategories = computed(() => {
     .filter(Boolean)
 })
 
-// Fonction pour basculer l'affichage complet d'une catégorie
+// Function to toggle the expanded view of a category
 const toggleCategoryExpand = (categoryTitle) => {
   expandedCategories.value[categoryTitle] = !expandedCategories.value[categoryTitle]
 }
 
-// Fonction pour obtenir les vidéos à afficher (limitées ou toutes)
+// Function to get the videos to display (limited or all)
 const getVisibleVideos = (category) => {
-  // Si la catégorie est développée ou s'il y a moins de 5 vidéos, afficher toutes les vidéos
+  // If the category is expanded or has less than 5 videos, show all videos
   if (expandedCategories.value[category.title] || category.videos.length <= 4) {
     return category.videos
   }
-  // Sinon, limiter à 4 vidéos
+  // Otherwise, limit to 4 videos
   return category.videos.slice(0, 4)
 }
 
-// Fonction pour lancer la vidéo dans le YoutubeLooper
+// Function to launch the video in the YoutubeLooper
 const playVideo = (videoId) => {
-  // Récupérer la vidéo correspondante
+  // Get the corresponding video
   const video = videos.value.find(v => v.video_id === videoId)
-  
-  // Extraire l'ID YouTube de l'URL
-  // Par exemple: https://www.youtube.com/watch?v=RLUGJFuvvDc
+
+  // Extract YouTube ID from the URL
   const youtubeId = video?.url?.split('v=')[1]?.split('&')[0]
   
   if (youtubeId) {
-    // Rediriger vers le YoutubeLooper avec l'ID YouTube en paramètre
+    // Redirect to the YoutubeLooper with the YouTube ID as a parameter
     router.push({
       name: 'youtube-looper',
       query: { id: youtubeId }
@@ -74,6 +81,12 @@ const playVideo = (videoId) => {
   } else {
     console.error('Impossible d\'extraire l\'ID YouTube de la vidéo:', video)
   }
+}
+
+// Function to handle image loading errors
+const handleImageError = (event) => {
+  // If the image fails to load, use a placeholder
+  event.target.src = 'https://placehold.co/320x180/e0e0e0/cccccc?text=No+Thumbnail'
 }
 </script>
 
@@ -118,9 +131,9 @@ const playVideo = (videoId) => {
       <section v-for="category in filteredCategories" :key="category.title" class="category-section">
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-xl font-semibold text-gray-800">{{ category.title }}</h2>
-          <!-- Bouton modifié pour basculer l'affichage -->
-          <button 
-            @click="toggleCategoryExpand(category.title)" 
+          <!-- Show more/less button for categories with more than 4 videos -->
+          <button
+            @click="toggleCategoryExpand(category.title)"
             class="text-blue-600 text-sm font-medium hover:text-blue-800"
             v-if="category.videos.length > 4"
           >
@@ -138,7 +151,12 @@ const playVideo = (videoId) => {
           >
             <!-- Thumbnail with Play Button Overlay -->
             <div class="relative group cursor-pointer" @click="playVideo(video.video_id)">
-              <img :src="video.thumbnail" :alt="video.title" class="w-full h-44 object-cover" />
+              <img 
+                :src="video.thumbnail" 
+                :alt="video.title" 
+                class="w-full h-44 object-cover"
+                @error="handleImageError"
+              />
               <div
                 class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               >
