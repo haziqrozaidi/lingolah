@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import Dropdown from 'primevue/dropdown'
 
 const router = useRouter()
 const videos = ref([]) 
@@ -36,18 +37,41 @@ const videoCategories = computed(() => {
 
 // Filter categories according to the search
 const filteredCategories = computed(() => {
-  if (!searchQuery.value.trim()) return videoCategories.value
-  const query = searchQuery.value.toLowerCase()
-  return videoCategories.value
-    .map(category => {
-      const filteredVideos = category.videos.filter(video =>
-        video.title.toLowerCase().includes(query) ||
-        (video.difficulty && video.difficulty.toLowerCase().includes(query))
-      )
-      return filteredVideos.length > 0 ? { ...category, videos: filteredVideos } : null
-    })
-    .filter(Boolean)
+  let categories = videoCategories.value
+
+  // Filter by topic if selected
+  if (selectedTopic.value) {
+    categories = categories.filter(category => category.title === selectedTopic.value)
+  }
+
+  // Filter by search query
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase()
+    categories = categories
+      .map(category => {
+        const filteredVideos = category.videos.filter(video =>
+          video.title.toLowerCase().includes(query) ||
+          (video.difficulty && video.difficulty.toLowerCase().includes(query))
+        )
+        return filteredVideos.length > 0 ? { ...category, videos: filteredVideos } : null
+      })
+      .filter(Boolean)
+  }
+
+  return categories
 })
+
+// Prepare topics for CascadeSelect 
+const topicOptions = computed(() =>
+  Array.from(new Set(videos.value.map(v => v.topic || 'Other')))
+
+    .filter(Boolean)
+    .map(topic => ({ label: topic, value: topic }))
+
+)
+
+// Selected topic state
+const selectedTopic = ref(null)
 
 // Function to toggle the expanded view of a category
 const toggleCategoryExpand = (categoryTitle) => {
@@ -113,11 +137,17 @@ const handleImageError = (event) => {
       </div>
 
       <div class="flex space-x-2">
-        <button
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          <i class="pi pi-filter mr-2"></i>Filter
-        </button>
+        <Dropdown
+          v-model="selectedTopic"
+          :options="topicOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Filter by topic"
+          class="w-56"
+          style="min-width: 180px"
+          showClear
+          dropdownIcon="pi pi-filter"
+        />
         <button
           class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
         >
