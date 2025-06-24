@@ -14,11 +14,10 @@ var flashcardSetsRouter = require('./routes/flashcardSets');
 var clerkUserRouter = require('./routes/clerkUser');
 var communityRouter = require('./routes/community');
 const flashcardRoutes = require('./routes/flashcards');
+var adminDashboard = require('./routes/adminDashboard'); 
 
 var app = express();
 
-// CORS must go AFTER app is defined, and only ONCE
-app.use(cors());
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -35,5 +34,6 @@ app.use('/api/admin/forum', adminForumRouter);
 app.use('/api/community', communityRouter);
 app.use('/flashcard-sets', flashcardSetsRouter);
 app.use('/flashcards', flashcardRoutes);
+app.use('/api/admin', adminDashboard);
 
 module.exports = app;

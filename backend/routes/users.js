@@ -2,7 +2,13 @@ var express = require('express');
 var router = express.Router();
 const { PrismaClient } = require('../generated/prisma');
 const prisma = new PrismaClient();
+const cors = require('cors');
 
+// Apply CORS ONLY to this router
+router.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 /* GET users listing. */
 router.get('/', function(req, res, next) {
   res.send('respond with a resource');
