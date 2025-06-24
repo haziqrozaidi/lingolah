@@ -1,8 +1,6 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-
-// User information
-const userLogin = ref('johnsmith')
+import { UserButton } from '@clerk/vue'
 
 // Current date and time handling
 const currentDateTime = ref('')
@@ -168,13 +166,7 @@ const handleSearchBlur = () => {
 
         <!-- User Menu -->
         <div class="flex items-center">
-          <div class="w-8 h-8 rounded-full bg-gray-300 mr-2"></div>
-          <div class="hidden md:block">
-            <span class="text-sm font-medium text-gray-700">{{ userLogin }}</span>
-          </div>
-          <button class="ml-2 p-1 rounded hover:bg-gray-100">
-            <i class="pi pi-chevron-down text-gray-600"></i>
-          </button>
+          <UserButton />
         </div>
       </div>
     </div>

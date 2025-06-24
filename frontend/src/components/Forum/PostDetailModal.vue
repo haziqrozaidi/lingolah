@@ -16,11 +16,15 @@
                     <div class="post-author flex items-center mb-4">
                         <div
                             class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-white font-bold mr-3">
-                            {{ post.author.charAt(0) }}
+                            <img v-if="profileImage" :src="profileImage" :alt="post.user?.username || 'User'"
+                                class="w-10 h-10 rounded-full object-cover" />
+                            <span v-else>
+                                {{ post.user?.username ? post.user.username.charAt(0) : '?' }}
+                            </span>
                         </div>
                         <div>
-                            <p class="font-semibold">{{ post.author }}</p>
-                            <p class="text-xs text-gray-500">{{ post.time }}</p>
+                            <p class="font-semibold">{{ post.user?.username || 'Unknown' }}</p>
+                            <p class="text-xs text-gray-500">{{ formatDate(post.date) }}</p>
                         </div>
                     </div>
 
@@ -36,15 +40,32 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                             </svg>
-                            {{ post.views }} views
+                            {{ post.viewCount }} views
                         </span>
                         <span class="flex items-center text-sm text-gray-600">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                             </svg>
-                            {{ post.likes }} likes
+                            {{ likes }} likes
                         </span>
+                        <span class="flex items-center text-sm text-gray-600">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 20 20">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M18 10c0 3.866-3.582 7-8 7s-8-3.134-8-7 3.582-7 8-7 8 3.134 8 7z" />
+                            </svg>
+                            {{ comments.length }} comments
+                        </span>
+                    </div>
+
+                    <!-- Like Button (in modal) -->
+                    <div class="mb-6">
+                        <button @click="toggleLike" :class="liked ? 'text-blue-600 font-bold' : 'text-gray-500'"
+                            class="flex items-center focus:outline-none">
+                            <span v-if="liked">♥</span>
+                            <span v-else>♡</span>
+                            <span class="ml-1">{{ likes }} Like{{ likes === 1 ? '' : 's' }}</span>
+                        </button>
                     </div>
 
                     <div class="comments-section">
@@ -54,7 +75,9 @@
                             <div class="flex items-start">
                                 <div
                                     class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold mr-3">
-                                    {{ currentUser.charAt(0) }}
+                                    <img v-if="currentUserImage" :src="currentUserImage" :alt="currentUser"
+                                        class="w-8 h-8 rounded-full object-cover" />
+                                    <span v-else>{{ currentUser.charAt(0) }}</span>
                                 </div>
                                 <div class="flex-1">
                                     <textarea v-model="newComment"
@@ -62,8 +85,9 @@
                                         placeholder="Write a comment..." rows="2"></textarea>
                                     <button @click="addComment"
                                         class="mt-2 px-4 py-2 bg-blue-500 text-white text-sm font-medium rounded-lg hover:bg-blue-600 transition-colors"
-                                        :disabled="!newComment.trim()">
-                                        Post Comment
+                                        :disabled="!newComment.trim() || postingComment">
+                                        <span v-if="postingComment">Posting...</span>
+                                        <span v-else>Post Comment</span>
                                     </button>
                                 </div>
                             </div>
@@ -74,18 +98,21 @@
                                 <div class="flex items-start">
                                     <div
                                         class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold mr-3">
-                                        {{ comment.author.charAt(0) }}
+                                        <img v-if="commentImages[comment.userId]" :src="commentImages[comment.userId]"
+                                            :alt="comment.user?.username || 'User'"
+                                            class="w-8 h-8 rounded-full object-cover" />
+                                        <span v-else>
+                                            {{ comment.user?.username ? comment.user.username.charAt(0) : 'U' }}
+                                        </span>
                                     </div>
                                     <div class="flex-1">
                                         <div class="comment-header flex items-center mb-1">
-                                            <span class="font-semibold mr-2">{{ comment.author }}</span>
-                                            <span class="text-xs text-gray-500">{{ comment.time }}</span>
+                                            <span class="font-semibold mr-2">{{ comment.user?.username || comment.author
+                                                || 'User' }}</span>
+                                            <span class="text-xs text-gray-500">{{ formatDate(comment.createdAt ||
+                                                comment.time) }}</span>
                                         </div>
                                         <p class="text-sm">{{ comment.content }}</p>
-                                        <div class="comment-actions mt-2 flex items-center">
-                                            <button class="text-xs text-gray-500 hover:text-blue-500 mr-3">Like</button>
-                                            <button class="text-xs text-gray-500 hover:text-blue-500">Reply</button>
-                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -98,60 +125,121 @@
 </template>
 
 <script>
+import { useUserStore } from "@/stores/userStore";
 export default {
     name: 'PostDetailModal',
     props: {
         show: Boolean,
         post: {
             type: Object,
-            required: true,
-            default: () => ({
-                title: '',
-                author: '',
-                time: '',
-                content: '',
-                views: '',
-                likes: '',
-                comments: [] // Ensure comments is always an array
-            })
+            required: true
+        },
+        // Pass the logged-in user's DB id as a prop!
+        currentUserId: {
+            type: String,
+            required: true
         },
         currentUser: {
             type: String,
             default: 'Current User'
+        },
+        likes: {
+            type: Number,
+            default: 0
+        },
+        liked: {
+            type: Boolean,
+            default: false
+        },
+        profileImage: {
+            type: String,
+            default: ''
+        },
+        commentImages: {
+            type: Object,
+            default: () => ({})
+        },
+        currentUserImage: {
+            type: String,
+            default: ''
         }
     },
     data() {
         return {
-            newComment: ''
+            newComment: '',
+            postingComment: false,
+            comments: [],
+            dbUserId: null,
         }
     },
-    computed: {
-        comments() {
-            return this.post.comments || []
+    watch: {
+        // Load comments when modal opens or post changes
+        show(val) {
+            if (val) this.fetchComments();
+        },
+        post: {
+            handler() {
+                if (this.show) this.fetchComments();
+            },
+            immediate: true
         }
+    },
+    async mounted() {
+        const userStore = useUserStore();
+        this.dbUserId = await this.fetchDbUserIdByClerkId(userStore.userId);
     },
     methods: {
+        async fetchDbUserIdByClerkId(clerkUserId) {
+            const res = await fetch(`http://localhost:3000/users/by-clerk-id/${clerkUserId}`);
+            if (!res.ok) throw new Error("User not found");
+            const data = await res.json();
+            return data.id;
+        },
         close() {
             this.$emit('close')
         },
-        addComment() {
-            if (!this.newComment.trim()) return
-
-            const newComment = {
-                id: Date.now(),
-                author: this.currentUser,
-                time: 'Just now',
-                content: this.newComment,
-                likes: 0
+        async fetchComments() {
+            if (!this.post.id) return;
+            try {
+                const res = await fetch(`http://localhost:3000/api/forum/posts/${this.post.id}/comments`);
+                if (!res.ok) throw new Error('Failed to fetch comments');
+                this.comments = await res.json();
+            } catch (e) {
+                this.comments = [];
             }
+        },
+        async addComment() {
+            if (!this.newComment.trim() || !this.post.id) return;
+            this.postingComment = true;
+            try {
 
-            this.$emit('add-comment', newComment)
-            this.newComment = ''
+                const res = await fetch(`http://localhost:3000/api/forum/posts/${this.post.id}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        userId: this.dbUserId,
+                        content: this.newComment
+                    })
+                });
+                if (!res.ok) throw new Error('Failed to post comment');
+                this.newComment = '';
+                await this.fetchComments(); // Refresh local comments
+            } catch (e) {
+                console.error('Failed to post comment:', e);
+            }
+            this.postingComment = false;
+        },
+        toggleLike() {
+            this.$emit('toggle-like')
+        },
+        formatDate(date) {
+            if (!date) return ''
+            const d = typeof date === 'string' ? new Date(date) : date
+            return d.toLocaleString()
         }
     }
 }
 </script>
-
 <style scoped>
 .modal-mask {
     position: fixed;
@@ -160,7 +248,10 @@ export default {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(40, 40, 60, 0.18);
+    /* frosted glass background */
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;

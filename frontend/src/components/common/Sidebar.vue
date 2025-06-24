@@ -1,6 +1,11 @@
 <script setup>
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
+import { UserButton, useUser } from '@clerk/vue'
+import { useUserStore } from '../../stores/userStore'
+
+const { user, isLoaded, isSignedIn } = useUser()
+const userStore = useUserStore()
 
 // Navigation sections with collapsible menus
 const navigationSections = ref([
@@ -22,8 +27,6 @@ const navigationSections = ref([
     isOpen: false,
     items: [
       { name: 'Community', path: '/forum', icon: 'pi pi-users' },
-      { name: 'Reports', path: '/reports', icon: 'pi pi-chart-bar' },
-      { name: 'Documents', path: '/documents', icon: 'pi pi-file' },
     ],
   },
   {
@@ -40,6 +43,39 @@ const navigationSections = ref([
     items: [
       { name: 'Watch', path: '/video', icon: 'pi pi-video' },
       { name: 'Help', path: '/help', icon: 'pi pi-question-circle' },
+    ],
+  },
+])
+
+// Admin navigation sections
+const adminNavigationSections = ref([
+  {
+    title: 'Main',
+    isOpen: true,
+    items: [{ name: 'Dashboard', path: '/admin', icon: 'pi pi-home' }],
+  },
+  {
+    title: 'Manage Flashcard',
+    isOpen: true,
+    items: [
+      { name: 'Flashcard Set', path: '/admin/flashcard-set', icon: 'pi pi-folder' },
+      { name: 'Flashcard', path: '/admin/flashcard', icon: 'pi pi-check-square' },
+    ],
+  },
+  {
+    title: 'Manage Forum',
+    isOpen: false,
+    items: [
+      { name: 'Reports', path: '/admin/forum', icon: 'pi pi-chart-bar' },
+    ],
+  },
+  {
+    title: 'Manage Community',
+    isOpen: false,
+    items: [
+      { name: 'Community', path: '/admin/community', icon: 'pi pi-users' },
+      { name: 'Community Request', path: '/admin/community/request', icon: 'pi pi-file-edit' },
+      { name: 'Community Delete', path: '/admin/community/delete', icon: 'pi pi-trash' },
     ],
   },
 ])
@@ -77,7 +113,13 @@ const toggleSidebar = () => {
 
     <!-- Navigation - unchanged section headers -->
     <nav class="flex-grow py-2 mt-2 overflow-y-auto">
-      <div v-for="(section, sIndex) in navigationSections" :key="sIndex" class="mb-2">
+      <div
+        v-for="(section, sIndex) in userStore.role === 'admin'
+          ? adminNavigationSections
+          : navigationSections"
+        :key="sIndex"
+        class="mb-2"
+      >
         <!-- Section Header - unchanged -->
         <div
           @click="toggleSection(section)"
@@ -131,13 +173,23 @@ const toggleSidebar = () => {
       </div>
     </nav>
 
-    <!-- User Profile Section - unchanged -->
     <div class="p-3 border-t border-gray-200">
       <div class="flex items-center" :class="{ 'justify-center': isSidebarCollapsed }">
-        <div class="w-8 h-8 rounded-full bg-gray-300 flex-shrink-0"></div>
-        <div class="ml-3" v-if="!isSidebarCollapsed">
-          <p class="text-sm font-medium text-gray-700">johnsmith</p>
-          <p class="text-xs text-gray-500">johnsmith@example.com</p>
+        <div class="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+          <img
+            v-if="isLoaded && isSignedIn && user.imageUrl"
+            :src="user.imageUrl"
+            :alt="`${user.username || user.firstName || 'User'}'s avatar`"
+            class="w-full h-full object-cover"
+          />
+        </div>
+        <div class="ml-3" v-if="!isSidebarCollapsed && isLoaded && isSignedIn">
+          <p class="text-sm font-medium text-gray-700">
+            {{
+              user.username || user.firstName || user.primaryEmailAddress.emailAddress.split('@')[0]
+            }}
+          </p>
+          <p class="text-xs text-gray-500">{{ user.primaryEmailAddress?.emailAddress }}</p>
         </div>
       </div>
     </div>
