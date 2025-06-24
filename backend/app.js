@@ -15,6 +15,7 @@ var clerkUserRouter = require('./routes/clerkUser');
 var communityRouter = require('./routes/community');
 const flashcardRoutes = require('./routes/flashcards');
 var adminDashboard = require('./routes/adminDashboard'); 
+const progressRoutes = require('./routes/progress');
 const videosRouter = require('./routes/videos');
 
 var app = express();
@@ -37,6 +38,7 @@ app.use('/api/community', communityRouter);
 app.use('/flashcard-sets', flashcardSetsRouter);
 app.use('/flashcards', flashcardRoutes);
 app.use('/api/admin', adminDashboard);
+app.use('/progress', progressRoutes);
 app.use('/api/videos', videosRouter);
 
 module.exports = app;
