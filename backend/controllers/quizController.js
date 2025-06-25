@@ -49,6 +49,8 @@ exports.createQuiz = async (quizData) => {
     where: { id: quizData.userId },
   });
 
+  console.error("Creating quiz with data:", quizData); // Debug log
+
   if (!existingUser) {
     throw new Error(`User with ID ${quizData.userId} not found`);
   }
@@ -70,6 +72,105 @@ exports.createQuiz = async (quizData) => {
   });
 
   return formatQuiz(newQuiz);
+};
+
+/**
+ * Delete a question from a quiz, including its choices and matchPairs
+ */
+exports.deleteQuestionFromQuiz = async (quizId, questionId) => {
+  const question = await prisma.quizQuestion.findUnique({
+    where: { id: questionId },
+  });
+
+  if (!question || question.quizId !== quizId) {
+    throw new Error(`Question with ID ${questionId} not found in quiz ${quizId}`);
+  }
+
+  // Delete choices and matchPairs related to the question
+  await prisma.quizChoice.deleteMany({ where: { questionId } });
+  await prisma.quizMatchPair.deleteMany({ where: { questionId } });
+
+  // Delete the question itself
+  await prisma.quizQuestion.delete({ where: { id: questionId } });
+
+  return true;
+};
+
+/**
+ * Add a question to a quiz, including choices or matchPairs if provided
+ */
+exports.addQuestionWithDetails = async (quizId, questionData) => {
+  const existingQuiz = await prisma.quiz.findUnique({
+    where: { id: quizId },
+  });
+
+  if (!existingQuiz) {
+    throw new Error(`Quiz with ID ${quizId} not found`);
+  }
+
+  // Create the question
+  const newQuestion = await prisma.quizQuestion.create({
+    data: {
+      quizId: quizId,
+      type: questionData.type,
+      question: questionData.question,
+      correctAnswer: questionData.correctAnswer || "",
+      order: questionData.order || 0,
+    },
+  });
+
+  // Add choices if MCQ
+  if (questionData.type === "mcq" && Array.isArray(questionData.choices)) {
+    for (const choice of questionData.choices) {
+      await prisma.quizChoice.create({
+        data: {
+          questionId: newQuestion.id,
+          text: choice.text,
+          isCorrect: !!choice.isCorrect,
+        },
+      });
+    }
+  }
+
+  // Add matchPairs if match type
+  if (questionData.type === "match" && Array.isArray(questionData.matchPairs)) {
+    for (const pair of questionData.matchPairs) {
+      await prisma.quizMatchPair.create({
+        data: {
+          questionId: newQuestion.id,
+          leftItem: pair.leftItem,
+          rightItem: pair.rightItem,
+        },
+      });
+    }
+  }
+
+  // Fetch the question with choices/matchPairs
+  const fullQuestion = await prisma.quizQuestion.findUnique({
+    where: { id: newQuestion.id },
+    include: {
+      choices: true,
+      matchPairs: true,
+    },
+  });
+
+  return formatQuestion(fullQuestion);
+};
+
+/**
+ * Get all questions for a quiz
+ */
+exports.getQuizQuestions = async (quizId) => {
+  const questions = await prisma.quizQuestion.findMany({
+    where: { quizId },
+    include: {
+      choices: true,
+      matchPairs: true,
+    },
+    orderBy: { order: "asc" },
+  });
+
+  return questions.map(formatQuestion);
 };
 
 /**

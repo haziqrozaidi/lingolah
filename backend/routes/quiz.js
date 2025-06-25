@@ -42,6 +42,71 @@ router.get("/:id", async (req, res) => {
 });
 
 /**
+ * PUT /quizzes/:quizId/questions/:questionId
+ * Update an existing question in a quiz
+ */
+router.put("/:quizId/questions/:questionId", async (req, res) => {
+  const { quizId, questionId } = req.params;
+  const questionData = req.body;
+
+  if (!questionData.type || !questionData.question) {
+    return res.status(400).json({
+      error: "Missing required fields",
+      requiredFields: ["type", "question"],
+    });
+  }
+
+  try {
+    console.log(`Updating question ${questionId} in quiz ${quizId} with data:`, questionData);
+    const updatedQuestion = await quizController.updateQuestion(questionId, questionData);
+    res.status(200).json(updatedQuestion);
+  } catch (error) {
+    console.error("Error updating question:", error);
+    res.status(500).json({
+      error: "Failed to update question",
+      details: error.message,
+    });
+  }
+});
+
+/**
+ * DELETE /quizzes/:quizId/questions/:questionId
+ * Delete a question from a quiz
+ */
+router.delete("/:quizId/questions/:questionId", async (req, res) => {
+  const { quizId, questionId } = req.params;
+
+  try {
+    await quizController.deleteQuestionFromQuiz(quizId, questionId);
+    res.status(200).json({ message: "Question deleted successfully" });
+  } catch (error) {
+    console.error(`Error deleting question ${questionId} from quiz ${quizId}:`, error);
+    res.status(500).json({
+      error: "Failed to delete question",
+      details: error.message,
+    });
+  }
+});
+/**
+ * GET /quizzes/:quizId/questions
+ * Get all questions for a specific quiz
+ */
+router.get("/:quizId/questions", async (req, res) => {
+  const { quizId } = req.params;
+
+  try {
+    const questions = await quizController.getQuizQuestions(quizId);
+    res.status(200).json(questions);
+  } catch (error) {
+    console.error("Error fetching quiz questions:", error);
+    res.status(500).json({
+      error: "Failed to retrieve quiz questions",
+      details: error.message,
+    });
+  }
+});
+
+/**
  * POST /quizzes/:quizId/attempts
  * Add or update a quiz attempt for a user
  */
@@ -108,9 +173,12 @@ router.get("/:quizId/attempts/:userId", async (req, res) => {
 
 /**
  * POST /quizzes
+ * Create a new quiz
  */
 router.post("/", async (req, res) => {
-  const { title, userId, description } = req.body;
+  const { title, userId, description, difficulty, type, questions } = req.body;
+
+  console.log("Creating quiz with data:", { title, userId, description, difficulty, type, questions });
 
   if (!title || !userId) {
     return res.status(400).json({
@@ -122,8 +190,11 @@ router.post("/", async (req, res) => {
   try {
     const quiz = await quizController.createQuiz({
       title,
-      description,
       userId,
+      description,
+      difficulty,
+      type,
+      questions, // Array of questions [{ text, options, correctAnswer }]
     });
 
     res.status(201).json(quiz);
@@ -141,9 +212,9 @@ router.post("/", async (req, res) => {
  */
 router.post("/:quizId/questions", async (req, res) => {
   const { quizId } = req.params;
-  const { type, question, order } = req.body;
+  const questionData= req.body;
 
-  if (!type || !question) {
+  if (!questionData.type || !questionData.question) {
     return res.status(400).json({
       error: "Missing required fields",
       requiredFields: ["type", "question"],
@@ -151,11 +222,8 @@ router.post("/:quizId/questions", async (req, res) => {
   }
 
   try {
-    const newQuestion = await quizController.addQuestionToQuiz(quizId, {
-      type,
-      question,
-      order,
-    });
+    console.log(`Adding question to quiz ${quizId} with data:`, questionData);
+    const newQuestion = await quizController.addQuestionWithDetails(quizId, questionData);
 
     res.status(201).json(newQuestion);
   } catch (error) {

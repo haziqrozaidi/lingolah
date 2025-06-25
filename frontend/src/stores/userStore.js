@@ -63,7 +63,8 @@ export const useUserStore = defineStore('user', () => {
 
       console.log('User data sent successfully')
       const data = await response.json()
-      localUserId.value = data.user.id 
+      localUserId.value = data.user.id
+      localStorage.setItem('localUserId', data.user.id)
     } catch (error) {
       console.error('Failed to sync user data with backend:', error)
     }

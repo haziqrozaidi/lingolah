@@ -1,29 +1,24 @@
 <template>
   <div class="admin-quizzes-page">
     <h1>Quiz Management</h1>
-    
+
     <!-- Action Buttons -->
     <div class="action-buttons">
-      <button @click="showCreateModal = true" class="btn-primary">
-        <i class="pi pi-plus"></i> Create New Quiz
+      <button @click="toggleShowCreateModal" class="btn-primary">
+        ➕ Create New Quiz
       </button>
     </div>
 
     <!-- Loading State -->
     <div v-if="loading" class="text-center py-16">
-      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div class="loader"></div>
       <p class="mt-4 text-gray-600">Loading quizzes...</p>
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
-      <p class="text-red-700">{{ error }}</p>
-      <button
-        @click="loadQuizzes"
-        class="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200"
-      >
-        Try again
-      </button>
+    <div v-else-if="error" class="error-box">
+      <p>{{ error }}</p>
+      <button @click="loadQuizzes" class="btn-retry">Try again</button>
     </div>
 
     <!-- Quizzes Table -->
@@ -51,124 +46,102 @@
             <td>{{ quiz.type }}</td>
             <td>{{ quiz.questions.length }}</td>
             <td class="actions">
-              <button @click="editQuiz(quiz)" class="btn-icon" title="Edit">
-                <i class="pi pi-pencil"></i>
-              </button>
-              <button @click="confirmDelete(quiz.id)" class="btn-icon danger" title="Delete">
-                <i class="pi pi-trash"></i>
-              </button>
-              <button @click="viewQuestions(quiz.id)" class="btn-icon" title="View Questions">
-                <i class="pi pi-list"></i>
-              </button>
+              <button @click="editQuiz(quiz)" class="btn-icon">✏️</button>
+              <button @click="confirmDelete(quiz.id)" class="btn-icon danger">🗑️</button>
+              <button @click="viewQuestions(quiz.id)" class="btn-icon">📋</button>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
 
-    <!-- Create/Edit Quiz Modal -->
-    <Dialog v-model:visible="showCreateModal" header="Create New Quiz" :modal="true">
-      <div class="form-group">
-        <label for="quiz-title">Title</label>
-        <InputText id="quiz-title" v-model="currentQuiz.title" />
-      </div>
-      
-      <div class="form-group">
-        <label for="quiz-description">Description</label>
-        <Textarea id="quiz-description" v-model="currentQuiz.description" rows="3" />
-      </div>
-      
-      <div class="form-group">
-        <label for="quiz-difficulty">Difficulty</label>
-        <Dropdown 
-          id="quiz-difficulty" 
-          v-model="currentQuiz.difficulty" 
-          :options="difficultyOptions" 
-          optionLabel="label"
-          optionValue="value"
-        />
-      </div>
-      
-      <div class="form-group">
-        <label for="quiz-type">Type</label>
-        <Dropdown 
-          id="quiz-type" 
-          v-model="currentQuiz.type" 
-          :options="typeOptions" 
-          optionLabel="label"
-          optionValue="value"
-        />
-      </div>
-      
-      <template #footer>
-        <Button label="Cancel" icon="pi pi-times" @click="closeModal" class="p-button-text" />
-        <Button 
-          :label="isEditing ? 'Update' : 'Create'" 
-          icon="pi pi-check" 
-          @click="saveQuiz" 
-          :loading="saving"
-        />
-      </template>
-    </Dialog>
+    <!-- Create/Edit Modal -->
+    <div v-if="showCreateModal" class="modal-overlay">
+      <div class="modal">
+        <h2>{{ isEditing ? 'Edit Quiz' : 'Create New Quiz' }}</h2>
 
-    <!-- Delete Confirmation Dialog -->
-    <Dialog 
-      v-model:visible="showDeleteConfirm" 
-      header="Confirm Deletion" 
-      :modal="true"
-      :style="{ width: '450px' }"
-    >
-      <div class="confirmation-content">
-        <i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem" />
-        <span>Are you sure you want to delete this quiz?</span>
-      </div>
-      <template #footer>
-        <Button label="No" icon="pi pi-times" @click="showDeleteConfirm = false" class="p-button-text" />
-        <Button label="Yes" icon="pi pi-check" @click="deleteQuiz" class="p-button-danger" />
-      </template>
-    </Dialog>
+        <div class="form-group">
+          <label for="quiz-title">Title</label>
+          <input id="quiz-title" v-model="currentQuiz.title" type="text" />
+        </div>
 
-    <!-- Questions Management Dialog -->
-    <Dialog 
-      v-model:visible="showQuestionsModal" 
-      :header="`Manage Questions: ${currentQuizTitle}`" 
-      :modal="true"
-      :style="{ width: '80vw', maxWidth: '1200px' }"
-    >
-      <QuestionsManager 
-        v-if="showQuestionsModal" 
-        :quiz-id="currentQuizId" 
-        @close="showQuestionsModal = false"
-      />
-    </Dialog>
+        <div class="form-group">
+          <label for="quiz-description">Description</label>
+          <textarea id="quiz-description" v-model="currentQuiz.description" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="quiz-difficulty">Difficulty</label>
+          <select id="quiz-difficulty" v-model="currentQuiz.difficulty">
+            <option v-for="option in difficultyOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="quiz-type">Type</label>
+          <select id="quiz-type" v-model="currentQuiz.type">
+            <option v-for="option in typeOptions" :key="option.value" :value="option.value">
+              {{ option.label }}
+            </option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="closeModal" class="btn-secondary">Cancel</button>
+          <button @click="saveQuiz" class="btn-primary" :disabled="saving">
+            {{ isEditing ? 'Update' : 'Create' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteConfirm" class="modal-overlay">
+      <div class="modal small">
+        <h2>Confirm Deletion</h2>
+        <p>Are you sure you want to delete this quiz?</p>
+        <div class="modal-actions">
+          <button @click="showDeleteConfirm = false" class="btn-secondary">No</button>
+          <button @click="deleteQuiz" class="btn-danger">Yes, Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Questions Manager Placeholder -->
+    <div v-if="showQuestionsModal" class="modal-overlay">
+      <div class="modal large">
+        <h2>Manage Questions: {{ currentQuizTitle }}</h2>
+        <QuestionsManager :quizId="currentQuizId" @close="showQuestionsModal = false" />
+        <button @click="showQuestionsModal = false" class="btn-secondary mt-4">Close</button>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref,  onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 import { QuizService } from '@/services/quizService'
-import Dialog from 'primevue/dialog'
-import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
-import Textarea from 'primevue/textarea'
-import Dropdown from 'primevue/dropdown'
-import QuestionsManager from '@/components/admin/QuestionsManager.vue'
+import { useUserStore } from '@/stores/userStore'
+import QuestionsManager from '@/components/quiz/QuestionsManager.vue'
 
+const userStore = useUserStore()
+const userId = userStore.localUserId
 
 const quizzes = ref([])
 const loading = ref(true)
 const error = ref(null)
 const saving = ref(false)
 
-// Modal states
 const showCreateModal = ref(false)
 const showDeleteConfirm = ref(false)
 const showQuestionsModal = ref(false)
 const isEditing = ref(false)
 
-// Current quiz being edited
 const currentQuiz = ref({
   id: null,
+  userId: userId,
   title: '',
   description: '',
   difficulty: 'medium',
@@ -178,7 +151,6 @@ const currentQuiz = ref({
 const currentQuizId = ref(null)
 const currentQuizTitle = ref('')
 
-// Options for dropdowns
 const difficultyOptions = ref([
   { label: 'Beginner', value: 'easy' },
   { label: 'Intermediate', value: 'medium' },
@@ -191,69 +163,67 @@ const typeOptions = ref([
   { label: 'Open Ended', value: 'open' }
 ])
 
-// Load quizzes
 const loadQuizzes = async () => {
   try {
     loading.value = true
     error.value = null
     quizzes.value = await QuizService.getAllQuizzes()
   } catch (err) {
-    console.error('Error loading quizzes:', err)
+    console.error(err)
     error.value = 'Failed to load quizzes. Please try again.'
   } finally {
     loading.value = false
   }
 }
 
-// Edit existing quiz
+const toggleShowCreateModal = () => {
+  showCreateModal.value = !showCreateModal.value
+}
+
 const editQuiz = (quiz) => {
   currentQuiz.value = { ...quiz }
   isEditing.value = true
   showCreateModal.value = true
 }
 
-// Save quiz (create or update)
 const saveQuiz = async () => {
   try {
     saving.value = true
-    
+    currentQuiz.value.userId = userId // Ensure userId is set
+    console.log('Saving quiz:', currentQuiz.value)
     if (isEditing.value) {
       await QuizService.updateQuiz(currentQuiz.value.id, currentQuiz.value)
     } else {
       await QuizService.createQuiz(currentQuiz.value)
     }
-    
     await loadQuizzes()
     closeModal()
   } catch (err) {
-    console.error('Error saving quiz:', err)
-    error.value = `Failed to ${isEditing.value ? 'update' : 'create'} quiz. Please try again.`
+    console.error(err)
+    error.value = `Failed to ${isEditing.value ? 'update' : 'create'} quiz.`
   } finally {
     saving.value = false
   }
 }
 
-// Confirm before deleting
 const confirmDelete = (quizId) => {
   currentQuizId.value = quizId
   showDeleteConfirm.value = true
 }
 
-// Delete quiz
 const deleteQuiz = async () => {
   try {
     await QuizService.deleteQuiz(currentQuizId.value)
     await loadQuizzes()
   } catch (err) {
-    console.error('Error deleting quiz:', err)
-    error.value = 'Failed to delete quiz. Please try again.'
+    console.error(err)
+    error.value = 'Failed to delete quiz.'
   } finally {
     showDeleteConfirm.value = false
     currentQuizId.value = null
   }
 }
 
-// View questions for a quiz
 const viewQuestions = (quizId) => {
   const quiz = quizzes.value.find(q => q.id === quizId)
   currentQuizId.value = quizId
@@ -261,7 +231,6 @@ const viewQuestions = (quizId) => {
   showQuestionsModal.value = true
 }
 
-// Close modal
 const closeModal = () => {
   showCreateModal.value = false
   currentQuiz.value = {
@@ -271,9 +240,9 @@ const closeModal = () => {
     difficulty: 'medium',
     type: 'mcq'
   }
+  isEditing.value = false
 }
 
-// Load on mount
 onMounted(() => {
   loadQuizzes()
 })
@@ -299,20 +268,37 @@ h1 {
   margin-bottom: 2rem;
 }
 
-.btn-primary {
-  background-color: #163b8d;
-  color: white;
+.btn-primary,
+.btn-secondary,
+.btn-danger,
+.btn-retry {
   padding: 0.5rem 1rem;
   border-radius: 4px;
   border: none;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+}
+
+.btn-primary {
+  background-color: #163b8d;
+  color: white;
 }
 
 .btn-primary:hover {
   background-color: #1e4da8;
+}
+
+.btn-secondary {
+  background-color: #e0e0e0;
+}
+
+.btn-danger {
+  background-color: #c62828;
+  color: white;
+}
+
+.btn-retry {
+  background-color: #ffcdd2;
+  color: #b71c1c;
 }
 
 .quiz-table-container {
@@ -366,26 +352,71 @@ h1 {
 .btn-icon {
   background: none;
   border: none;
-  color: #163b8d;
   cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 4px;
-}
-
-.btn-icon:hover {
-  background-color: #f0f0f0;
+  font-size: 1.2rem;
 }
 
 .btn-icon.danger {
   color: #c62828;
 }
 
-.btn-icon.danger:hover {
-  background-color: #ffebee;
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #2563eb;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-box {
+  background-color: #ffe0e0;
+  border-left: 4px solid #c62828;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal {
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+}
+
+.modal.large {
+  max-width: 80vw;
+}
+
+.modal.small {
+  max-width: 400px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .form-group label {
@@ -394,8 +425,12 @@ h1 {
   font-weight: 600;
 }
 
-.confirmation-content {
-  display: flex;
-  align-items: center;
+.form-group input,
+.form-group textarea,
+.form-group select {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
 }
 </style>
