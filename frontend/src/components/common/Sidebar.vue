@@ -25,17 +25,12 @@ const navigationSections = ref([
   {
     title: 'Forum',
     isOpen: false,
-    items: [
-      { name: 'Community', path: '/forum', icon: 'pi pi-users' },
-    ],
+    items: [{ name: 'Community', path: '/forum', icon: 'pi pi-users' }],
   },
   {
     title: 'Quiz',
     isOpen: false,
-    items: [
-      { name: 'Quizes', path: '/quizes', icon: 'pi pi-file-edit' },
-      { name: 'Quiz', path: '/quiz', icon: 'pi pi-check' },
-    ],
+    items: [{ name: 'Quizes', path: '/quizes', icon: 'pi pi-file-edit' }],
   },
   {
     title: 'Video',
@@ -65,9 +60,7 @@ const adminNavigationSections = ref([
   {
     title: 'Manage Forum',
     isOpen: false,
-    items: [
-      { name: 'Reports', path: '/admin/forum', icon: 'pi pi-chart-bar' },
-    ],
+    items: [{ name: 'Reports', path: '/admin/forum', icon: 'pi pi-chart-bar' }],
   },
   {
     title: 'Manage Community',
@@ -92,6 +85,9 @@ const adminNavigationSections = ref([
       { name: 'Profile', path: '/admin/profile', icon: 'pi pi-cog' },
       { name: 'Users', path: '/admin/users', icon: 'pi pi-users' },
     ],
+    title: 'Manage Quizzes',
+    isOpen: false,
+    items: [{ name: 'Quizzes', path: '/admin/quizes', icon: 'pi pi-file-edit' }],
   },
 ])
 

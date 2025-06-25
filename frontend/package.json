@@ -14,6 +14,7 @@
     "@clerk/vue": "^1.8.8",
     "@primeuix/themes": "^1.1.1",
     "@tailwindcss/vite": "^4.1.7",
+    "canvas-confetti": "^1.9.3",
     "jquery": "^3.7.1",
     "pinia": "^3.0.1",
     "primeicons": "^7.0.0",

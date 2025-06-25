@@ -112,6 +112,7 @@ export default {
       required: true,
     },
   },
+  emits: ['answer', 'favorite-toggled', 'question-reported'],
   data() {
     return {
       // leftItems: ['was cooking', 'was cooking', 'was cooking', 'was cooking'],
@@ -174,6 +175,20 @@ export default {
 
       this.selectedLeft = null
       this.selectedRight = null
+
+      // Emit the current matches in a more structured format
+      const matchedPairs = Object.entries(this.currentMatches).map(([key, color]) => {
+        const [leftIndex, rightIndex] = key.split('-').map(Number)
+        return {
+          left: this.leftItems[leftIndex],
+          right: this.rightItems[rightIndex],
+          leftIndex,
+          rightIndex,
+          color,
+        }
+      })
+
+      this.$emit('answer', matchedPairs)
     },
     getMatchStyle(index, side) {
       if (side === 'left' && this.leftMatches[index] !== null) {
@@ -198,7 +213,10 @@ export default {
     },
     toggleFavorite() {
       this.isFavorite = !this.isFavorite
-      this.$emit('favorite-toggled', this.isFavorite)
+      this.$emit('favorite-toggled', {
+        isFavorite: this.isFavorite,
+        timestamp: new Date().toISOString(),
+      })
     },
 
     submitReport() {
@@ -213,7 +231,6 @@ export default {
       this.selectedReportOption = null
       this.customReportReason = ''
 
-      // Show success message
       alert('Thank you for your report! We will review this question.')
     },
   },

@@ -360,6 +360,7 @@ async function main() {
         subtitles: "",
       },
     }),
+
   ]);
 
   console.log("Videos created:", videos);
@@ -421,6 +422,169 @@ async function main() {
   });
 
   console.log("Report created:", report);
+
+
+  // Quiz 1: MCQ Type
+  const mcqQuiz = await prisma.quiz.create({
+    data: {
+      title: "Kuiz Pilihan Jawapan",
+      description: "Uji pengetahuan anda dengan soalan pilihan jawapan",
+      difficulty: "medium",
+      type: "mcq",
+      userId: admin.id,
+      questions: {
+        create: [
+          createMcqQuestion(1, [
+            { text: "Selamat pagi", isCorrect: true },
+            { text: "Selamat malam", isCorrect: false },
+            { text: "Terima kasih", isCorrect: false },
+            { text: "Apa khabar", isCorrect: false },
+          ]),
+          createMcqQuestion(2, [
+            { text: "Air", isCorrect: true },
+            { text: "Api", isCorrect: false },
+            { text: "Tanah", isCorrect: false },
+            { text: "Angin", isCorrect: false },
+          ]),
+          createMcqQuestion(3, [
+            { text: "Satu", isCorrect: true },
+            { text: "Dua", isCorrect: false },
+            { text: "Tiga", isCorrect: false },
+          ]),
+          createMcqQuestion(4, [
+            { text: "Merah", isCorrect: true },
+            { text: "Hijau", isCorrect: false },
+          ]),
+          createMcqQuestion(5, [
+            { text: "Terima kasih", isCorrect: true },
+            { text: "Sama-sama", isCorrect: false },
+          ]),
+        ],
+      },
+    },
+    include: {
+      questions: true,
+    },
+  });
+
+  // Quiz 2: Match Type
+  const matchQuiz = await prisma.quiz.create({
+    data: {
+      title: "Kuiz Padanan",
+      description: "Padankan perkataan dengan maknanya",
+      difficulty: "easy",
+      type: "match",
+      userId: admin.id,
+      questions: {
+        create: [
+          createMatchQuestion(1, [
+            { left: "Selamat pagi", right: "Good morning" },
+            { left: "Terima kasih", right: "Thank you" },
+          ]),
+          createMatchQuestion(2, [
+            { left: "Air", right: "Water" },
+            { left: "Makanan", right: "Food" },
+          ]),
+          createMatchQuestion(3, [
+            { left: "Satu", right: "One" },
+            { left: "Dua", right: "Two" },
+          ]),
+          createMatchQuestion(4, [
+            { left: "Merah", right: "Red" },
+            { left: "Biru", right: "Blue" },
+          ]),
+          createMatchQuestion(5, [
+            { left: "Kucing", right: "Cat" },
+            { left: "Anjing", right: "Dog" },
+          ]),
+        ],
+      },
+    },
+    include: {
+      questions: true,
+    },
+  });
+
+  // Quiz 3: Open Type
+  const openQuiz = await prisma.quiz.create({
+    data: {
+      title: "Kuiz Terbuka",
+      description: "Jawab soalan-soalan ini dengan perkataan anda sendiri",
+      difficulty: "hard",
+      type: "term",
+      userId: admin.id,
+      questions: {
+        create: [
+          createOpenQuestion(1, 'Apakah maksud "Selamat malam"?', "Good night"),
+          createOpenQuestion(
+            2,
+            'Bagaimana anda berkata "Thank you" ?',
+            "Terima kasih"
+          ),
+          createOpenQuestion(
+            3,
+            'Apakah warna "Merah"?',
+            "Red"
+          ),
+          createOpenQuestion(4, 'Apakah nombor selepas "Satu"?', "Dua"),
+          createOpenQuestion(
+            5,
+            'Apakah haiwan peliharaan "Kucing"?',
+            "Cat"
+          ),
+        ],
+      },
+    },
+    include: {
+      questions: true,
+    },
+  });
+
+  console.log("Created 3 quizzes:");
+  console.log(
+    `- MCQ Quiz: ${mcqQuiz.id} with ${mcqQuiz.questions.length} questions`
+  );
+  console.log(
+    `- Match Quiz: ${matchQuiz.id} with ${matchQuiz.questions.length} questions`
+  );
+  console.log(
+    `- Open Quiz: ${openQuiz.id} with ${openQuiz.questions.length} questions`
+  );
+
+  // Helper functions to create different question types
+  function createMcqQuestion(order, choices) {
+    return {
+      type: "mcq",
+      question: `Soalan ${order}: Pilih jawapan yang betul`,
+      order,
+      choices: {
+        create: choices,
+      },
+    };
+  }
+
+  function createMatchQuestion(order, pairs) {
+    return {
+      type: "match",
+      question: `Padankan perkataan (Soalan ${order})`,
+      order,
+      matchPairs: {
+        create: pairs.map((pair, idx) => ({
+          leftItem: pair.left,
+          rightItem: pair.right,
+        })),
+      },
+    };
+  }
+
+  function createOpenQuestion(order, question, correctAnswer) {
+    return {
+      type: "term",
+      question,
+      correctAnswer,
+      order,
+    };
+  }
 
   console.log("Database seeding completed successfully!");
 }

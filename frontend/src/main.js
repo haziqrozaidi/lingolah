@@ -13,6 +13,7 @@ import Noir from './presets/Noir.js'
 import VuePlyr from 'vue-plyr'
 import 'vue-plyr/dist/vue-plyr.css'
 
+
 import App from './App.vue'
 import router from './router'
 
@@ -35,6 +36,7 @@ app.use(ToastService)
 app.use(ConfirmationService)
 app.component('PrimeToast', Toast)
 app.component('PrimeConfirmDialog', ConfirmDialog)
+
 app.use(clerkPlugin, { publishableKey: PUBLISHABLE_KEY })
 app.use(VuePlyr, {
   plyr: {}
