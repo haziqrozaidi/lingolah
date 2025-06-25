@@ -1,26 +1,45 @@
 <template>
-  <div>
-    <!-- Category Filter -->
-    <div class="flex flex-wrap gap-2 mb-4">
-      <button @click="setCategoryFilter('All')" :class="[
-        'px-4 py-1 rounded',
-        selectedCategory === 'All' ? 'bg-blue-500 text-white font-semibold' : 'bg-gray-100 text-gray-700'
-      ]">
+  <div class="w-full max-w-4xl mx-auto py-4 px-2">
+    <!-- Categories -->
+    <div class="flex flex-wrap gap-2 mb-2">
+      <button
+        @click="setCategoryFilter('All')"
+        :class="[
+          'px-4 py-1 rounded-full border transition',
+          selectedCategory === 'All'
+            ? 'bg-blue-600 text-white border-blue-600 font-semibold shadow'
+            : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-400'
+        ]"
+      >
         All
       </button>
-      <button v-for="cat in categories" :key="cat" @click="setCategoryFilter(cat)" :class="[
-        'px-4 py-1 rounded',
-        selectedCategory === cat ? 'bg-blue-500 text-white font-semibold' : 'bg-gray-100 text-gray-700'
-      ]">
+      <button
+        v-for="cat in categories"
+        :key="cat"
+        @click="setCategoryFilter(cat)"
+        :class="[
+          'px-4 py-1 rounded-full border transition',
+          selectedCategory === cat
+            ? 'bg-blue-600 text-white border-blue-600 font-semibold shadow'
+            : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-blue-50 hover:border-blue-400'
+        ]"
+      >
         {{ cat }}
       </button>
     </div>
-
-    <!-- Create Post Button -->
-    <div class="mb-6">
-      <button class="bg-blue-500 text-white px-6 py-2 rounded font-semibold hover:bg-blue-600 transition-colors"
-        @click="showCreate = true">
-        Create Post
+    <!-- Search & Create Post Row -->
+    <div class="flex items-center gap-2 mb-4">
+      <input v-model="searchQuery"
+        type="text"
+        placeholder="Search posts..."
+        class="border rounded px-3 py-2 text-sm focus:outline-blue-400 flex-1 min-w-0 w-full md:w-96"
+        @input="handleSearch"
+      />
+      <button
+        class="bg-blue-600 text-white px-6 py-2 rounded-full font-semibold shadow hover:bg-blue-700 transition"
+        @click="showCreate = true"
+      >
+        <i class="pi pi-plus mr-2"></i> Create Post
       </button>
     </div>
 
@@ -32,14 +51,18 @@
             <h2 class="font-bold text-lg">Create Post</h2>
             <button class="text-2xl text-gray-400 hover:text-gray-600" @click="showCreate = false">&times;</button>
           </div>
-          <CreatePost :categories="categories" :community-id="community.id" @post-created="handlePostCreated"
-            @cancel="showCreate = false" />
+          <CreatePost
+            :categories="categories"
+            :community-id="community.id"
+            @post-created="handlePostCreated"
+            @cancel="showCreate = false"
+          />
         </div>
       </div>
     </transition>
 
     <!-- No Posts Available Section -->
-    <div v-if="filteredPosts.length === 0" class="w-full flex flex-col items-center justify-center my-16">
+    <div v-if="paginatedPosts.length === 0" class="w-full flex flex-col items-center justify-center my-8">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-300 mb-2" fill="none" viewBox="0 0 24 24"
         stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -49,78 +72,128 @@
       <div class="text-gray-400 text-base">Be the first to create a post by clicking the button above.</div>
     </div>
 
-    <!-- Display Posts -->
-    <div v-for="post in filteredPosts" :key="post.id"
-      class="forum-post bg-white rounded-xl p-4 mb-4 shadow flex flex-col sm:flex-row relative cursor-pointer"
-      @click="openPostDetailModal(post)">
-      <div class="post-avatar flex-shrink-0 mr-4 mb-2 sm:mb-0">
-        <div
-          class="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-400">
-          <img v-if="userImages[post.userId]" :src="userImages[post.userId]" :alt="post.user?.username || 'User'"
-            class="w-12 h-12 rounded-full object-cover" />
-          <span v-else>{{ post.user?.username?.charAt(0) || '?' }}</span>
+    <!-- Display Posts (thread style) -->
+    <div v-else class="flex flex-col gap-4">
+      <div
+        v-for="post in paginatedPosts"
+        :key="post.id"
+        class="bg-white rounded-xl border border-gray-200 shadow hover:shadow-lg transition p-5 flex gap-4 cursor-pointer forum-thread"
+        @click="openPostDetailModal(post)"
+      >
+        <!-- Left: User avatar -->
+        <div class="flex flex-col items-center min-w-[60px]">
+          <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-400 mb-2 overflow-hidden">
+            <img
+              v-if="userImages[post.userId]"
+              :src="userImages[post.userId]"
+              :alt="post.user?.username || 'User'"
+              class="w-12 h-12 object-cover"
+            />
+            <span v-else>{{ post.user?.username?.charAt(0) || '?' }}</span>
+          </div>
+          <button
+            @click.stop="toggleLike(post.id)"
+            :class="liked[post.id] ? 'text-blue-600 font-bold' : 'text-gray-400'"
+            class="flex flex-col items-center focus:outline-none group"
+            title="Like"
+          >
+            <span class="text-xl leading-none group-hover:text-blue-600 transition">
+              <i class="pi pi-heart"></i>
+            </span>
+            <span class="text-xs mt-0.5">{{ likes[post.id] || 0 }}</span>
+          </button>
         </div>
-      </div>
-      <div class="post-content flex-1 flex flex-col">
-        <div class="post-header flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
-          <h2 class="post-title font-semibold text-lg text-gray-800">{{ post.title }}</h2>
-          <!-- 3-dot menu -->
-          <div class="relative ml-2">
-            <button class="kebab-btn hover:text-blue-500 transition-colors" @click.stop="toggleMenu(post.id)">
-              <span>⋮</span>
-            </button>
-            <div v-if="activeMenu === post.id" class="dropdown-menu">
-              <ul>
-                <li v-if="dbUserId && post.userId === dbUserId">
-                  <button @click.stop="openEditModal(post); closeMenu()">Edit</button>
-                </li>
-                <li v-if="dbUserId && post.userId === dbUserId">
-                  <button class="text-red-600" @click.stop="deletePost(post.id); closeMenu()">Delete</button>
-                </li>
-                <li v-if="dbUserId && post.userId !== dbUserId">
-                  <button @click.stop="openReportDialog(post.id)">Report</button>
-                  <ReportPostDialog :postId="currentReportPostId" v-model:visible="showReportDialogVisible"
-                    @reported="onReported" />
-                </li>
-              </ul>
+        <!-- Right: Post content -->
+        <div class="flex-1 flex flex-col min-w-0">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between">
+            <div class="flex items-center gap-2 text-xs text-gray-500 mb-1">
+              <span v-if="post.user?.username" class="font-medium text-gray-700">
+                {{ post.user.username }}
+              </span>
+              <span v-if="post.category" class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-200 ml-2 text-xs">
+                {{ post.category }}
+              </span>
+              <span class="mx-1">•</span>
+              <span class="post-time">{{ formatDate(post.date) }}</span>
+              <span class="mx-1">•</span>
+              <span>{{ post.viewCount }} views</span>
+            </div>
+            <!-- 3-dot menu -->
+            <div class="relative ml-2">
+              <button class="kebab-btn hover:text-blue-500 transition-colors" @click.stop="toggleMenu(post.id)">
+                <span>⋮</span>
+              </button>
+              <div v-if="activeMenu === post.id" class="dropdown-menu z-30">
+                <ul>
+                  <li v-if="dbUserId && post.userId === dbUserId">
+                    <button @click.stop="openEditModal(post); closeMenu()">Edit</button>
+                  </li>
+                  <li v-if="dbUserId && post.userId === dbUserId">
+                    <button class="text-red-600" @click.stop="deletePost(post.id); closeMenu()">Delete</button>
+                  </li>
+                  <li v-if="dbUserId && post.userId !== dbUserId">
+                    <button @click.stop="openReportDialog(post.id)">Report</button>
+                    <ReportPostDialog :postId="currentReportPostId" v-model:visible="showReportDialogVisible"
+                      @reported="onReported" />
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <h2 class="font-semibold text-xl text-gray-800 mb-2 truncate">{{ post.title }}</h2>
+          <div class="text-gray-700 text-base mb-1 line-clamp-3 forum-thread-content" v-html="post.content"></div>
+          <div class="flex gap-6 text-sm mt-2">
+            <span class="flex items-center gap-1 text-gray-500">
+              <i class="pi pi-heart"></i> {{ likes[post.id] || 0 }} Likes
+            </span>
+            <span class="flex items-center gap-1 text-gray-500">
+              <i class="pi pi-comments"></i>
+              {{ (commentLists[post.id] && commentLists[post.id].length) || 0 }} Comments
+            </span>
+          </div>
+          <div class="mt-2 border-t pt-2">
+            <div v-for="(comment, idx) in (commentLists[post.id] ? commentLists[post.id].slice(0, 2) : [])"
+              :key="comment.id" class="mb-2 text-sm">
+              <span class="font-medium text-gray-700">{{ comment.user?.username || 'User' }}:</span>
+              <span>{{ comment.content }}</span>
+              <span class="text-xs text-gray-400 ml-2">{{ formatDate(comment.createdAt) }}</span>
+            </div>
+            <div v-if="commentLists[post.id] && commentLists[post.id].length > 2"
+              class="text-xs text-blue-500 cursor-pointer" @click.stop="openPostDetailModal(post)">
+              Show more comments
+            </div>
+            <div class="flex gap-2 mt-2">
+              <input v-model="commentInputs[post.id]" type="text" placeholder="Add a comment..."
+                class="border rounded px-2 py-1 text-sm flex-1 focus:outline-blue-400" @keyup.enter.stop="postComment(post.id)" @click.stop />
+              <button class="bg-blue-500 text-white px-3 py-1 rounded text-xs font-semibold hover:bg-blue-600 transition"
+                @click.stop="postComment(post.id)">Post</button>
             </div>
           </div>
         </div>
-        <div class="post-stats flex gap-4 sm:flex-row flex-col sm:gap-4 gap-1 text-xs text-gray-500 items-center">
-          <span>{{ post.viewCount }} views</span>
-          <span class="post-time">{{ formatDate(post.date) }}</span>
-        </div>
-        <!-- Like and Comment Section -->
-        <div class="flex items-center gap-4 mt-2">
-          <button @click.stop="toggleLike(post.id)"
-            :class="liked[post.id] ? 'text-blue-600 font-bold' : 'text-gray-500'"
-            class="flex items-center focus:outline-none">
-            <span v-if="liked[post.id]">♥</span>
-            <span v-else>♡</span>
-            <span class="ml-1">{{ likes[post.id] || 0 }} Like{{ (likes[post.id] || 0) == 1 ? '' : 's' }}</span>
-          </button>
-          <span class="text-gray-500">
-            💬 {{ (commentLists[post.id] && commentLists[post.id].length) || 0 }} Comments
-          </span>
-        </div>
-        <div class="mt-2 border-t pt-2">
-          <div v-for="(comment, idx) in (commentLists[post.id] ? commentLists[post.id].slice(0, 3) : [])"
-            :key="comment.id" class="mb-2 text-sm">
-            <span class="font-bold text-gray-700">{{ comment.user?.username || 'User' }}:</span>
-            <span>{{ comment.content }}</span>
-            <span class="text-xs text-gray-400 ml-2">{{ formatDate(comment.createdAt) }}</span>
-          </div>
-          <div v-if="commentLists[post.id] && commentLists[post.id].length > 3"
-            class="text-xs text-blue-500 cursor-pointer" @click.stop="openPostDetailModal(post)">
-            Show more comments
-          </div>
-          <div class="flex gap-2 mt-2">
-            <input v-model="commentInputs[post.id]" type="text" placeholder="Add a comment..."
-              class="border rounded px-2 py-1 text-sm flex-1" @keyup.enter.stop="postComment(post.id)" @click.stop />
-            <button class="btn-small" @click.stop="postComment(post.id)">Post</button>
-          </div>
-        </div>
       </div>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="totalPages > 1" class="flex justify-center mt-4">
+      <button
+        class="px-2 py-1 mx-1 rounded border"
+        :class="currentPage === 1 ? 'bg-blue-500 text-white border-blue-500' : 'bg-gray-50 text-gray-700 border-gray-200'"
+        :disabled="currentPage === 1"
+        @click="goToPage(currentPage - 1)"
+      >Prev</button>
+      <button
+        v-for="page in totalPages"
+        :key="page"
+        class="px-2 py-1 mx-1 rounded border"
+        :class="currentPage === page ? 'bg-blue-500 text-white border-blue-500' : 'bg-gray-50 text-gray-700 border-gray-200'"
+        @click="goToPage(page)"
+      >{{ page }}</button>
+      <button
+        class="px-2 py-1 mx-1 rounded border"
+        :class="currentPage === totalPages ? 'bg-blue-500 text-white border-blue-500' : 'bg-gray-50 text-gray-700 border-gray-200'"
+        :disabled="currentPage === totalPages"
+        @click="goToPage(currentPage + 1)"
+      >Next</button>
     </div>
 
     <!-- Edit Modal -->
@@ -165,6 +238,8 @@ import ReportPostDialog from '@/components/Forum/ReportPostDialog.vue'
 import CreatePost from './CreatePost.vue'
 import { useUserStore } from "@/stores/userStore";
 
+const PAGE_SIZE = 6;
+
 export default {
   name: 'ForumMainContent',
   components: {
@@ -182,6 +257,7 @@ export default {
       commentImages: {},
       userImages: {},
       posts: [],
+      filtered: [],
       newPost: { title: '', content: '', category: '' },
       editPost: { id: '', title: '', content: '', category: '' },
       showModal: false,
@@ -208,20 +284,38 @@ export default {
         "Localization & Translations",
         "Off-topic"
       ],
+      searchQuery: '',
+      currentPage: 1,
     }
   },
   computed: {
     filteredPosts() {
-      // Filter by community first
       let posts;
       if (!this.community || this.community.id === 'general') {
         posts = this.posts.filter(p => !p.communityId);
       } else {
         posts = this.posts.filter(p => p.communityId === this.community.id);
       }
-      // Then filter by category (unless "All")
-      if (this.selectedCategory === "All") return posts;
-      return posts.filter(p => p.category === this.selectedCategory);
+      if (this.selectedCategory !== "All") {
+        posts = posts.filter(p => p.category === this.selectedCategory);
+      }
+      if (this.searchQuery.trim().length > 0) {
+        const q = this.searchQuery.toLowerCase();
+        posts = posts.filter(
+          p =>
+            p.title.toLowerCase().includes(q) ||
+            p.content.toLowerCase().includes(q) ||
+            (p.user && p.user.username && p.user.username.toLowerCase().includes(q))
+        );
+      }
+      return posts;
+    },
+    paginatedPosts() {
+      const start = (this.currentPage - 1) * PAGE_SIZE;
+      return this.filteredPosts.slice(start, start + PAGE_SIZE);
+    },
+    totalPages() {
+      return Math.ceil(this.filteredPosts.length / PAGE_SIZE) || 1;
     },
     currentUsername() {
       const userStore = useUserStore();
@@ -232,6 +326,7 @@ export default {
     community: {
       immediate: true,
       handler() {
+        this.currentPage = 1;
         this.fetchPosts();
       }
     }
@@ -246,9 +341,17 @@ export default {
     document.removeEventListener('click', this.handleClickOutside);
   },
   methods: {
+    handleSearch() {
+      this.currentPage = 1;
+    },
+    goToPage(page) {
+      if (page < 1 || page > this.totalPages) return;
+      this.currentPage = page;
+    },
     async handlePostCreated() {
       await this.fetchPosts();
-      this.showCreate = false; // Optionally close modal
+      this.showCreate = false;
+      this.currentPage = 1;
     },
     openReportDialog(postId) {
       this.currentReportPostId = postId;
@@ -256,22 +359,20 @@ export default {
     },
     onReported() {
       this.showReportDialogVisible = false;
-      // Optionally refresh posts or show a notification
     },
     async fetchUserProfile(userId) {
       if (!userId) return null;
       const res = await fetch(`http://localhost:3000/api/clerk-user/${userId}`);
       if (!res.ok) return null;
-      return await res.json(); // { username, imageUrl }
+      return await res.json();
     },
     async countView(postId) {
       if (!postId) return;
-      await fetch(`http://localhost:3000/api/forum/posts/${postId}/view`, {
-        method: 'POST'
-      });
+      await fetch(`http://localhost:3000/api/forum/posts/${postId}/view`, { method: 'POST' });
     },
     setCategoryFilter(cat) {
       this.selectedCategory = cat;
+      this.currentPage = 1;
     },
     handleClickOutside(e) {
       if (!e.target.closest('.kebab-btn') && !e.target.closest('.dropdown-menu')) {
@@ -329,6 +430,7 @@ export default {
       this.newPost = { title: '', content: '', category: '' };
       this.showCreate = false;
       await this.fetchPosts();
+      this.currentPage = 1;
     },
     openEditModal(post) {
       this.editPost = { ...post };
@@ -443,29 +545,45 @@ export default {
 </script>
 
 <style scoped>
-.input {
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  padding: 0.25rem 0.5rem;
-  width: 100%;
+.modal-mask {
+  position: fixed;
+  z-index: 9998;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(40, 40, 60, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.3s ease;
 }
-
-.btn {
-  background-color: #3b82f6;
-  color: #fff;
-  padding: 0.25rem 1rem;
-  border-radius: 0.5rem;
+.edit-modal-container {
+  width: 98%;
+  max-width: 800px;
+  background-color: #fff;
+  border-radius: 16px;
+  padding: 2.5rem 2rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
 }
-
-.btn-small {
-  background-color: #3b82f6;
-  color: #fff;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.5rem;
-  font-size: 0.75rem;
+.modal-container {
+  width: 95%;
+  max-width: 540px;
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 2rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
 }
-
-/* Kebab menu styles */
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-from .modal-container,
+.modal-leave-to .modal-container {
+  transform: scale(0.9);
+}
 .kebab-btn {
   background: none;
   border: none;
@@ -474,12 +592,11 @@ export default {
   line-height: 1;
   padding: 0 5px;
 }
-
 .dropdown-menu {
   position: absolute;
   top: 1.8rem;
   right: 0.5rem;
-  z-index: 10;
+  z-index: 20;
   background: white;
   border: 1px solid #eee;
   border-radius: 0.5rem;
@@ -487,17 +604,14 @@ export default {
   min-width: 120px;
   padding: 0.25rem 0;
 }
-
 .dropdown-menu ul {
   list-style: none;
   margin: 0;
   padding: 0;
 }
-
 .dropdown-menu li {
   width: 100%;
 }
-
 .dropdown-menu button {
   width: 100%;
   background: none;
@@ -508,61 +622,20 @@ export default {
   color: #333;
   cursor: pointer;
 }
-
 .dropdown-menu button:disabled {
   color: #aaa;
   cursor: not-allowed;
 }
-
 .dropdown-menu .text-red-600 {
   color: #dc2626;
 }
-
-.modal-mask {
-  position: fixed;
-  z-index: 9998;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(40, 40, 60, 0.18);
-  /* lighter, not full black */
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: opacity 0.3s ease;
+.forum-thread-content {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 1.2em;
 }
-
-.edit-modal-container {
-  width: 98%;
-  max-width: 800px;
-  background-color: #fff;
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.10);
-}
-
-.modal-container {
-  width: 95%;
-  max-width: 540px;
-  background-color: #fff;
-  border-radius: 10px;
-  padding: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
-}
-
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-
-.modal-enter-from .modal-container,
-.modal-leave-to .modal-container {
-  transform: scale(0.9);
-}
-
 @media (max-width: 900px) {
   .edit-modal-container {
     max-width: 98vw;
