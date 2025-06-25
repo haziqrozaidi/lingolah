@@ -37,7 +37,7 @@ const navigationSections = ref([
     isOpen: false,
     items: [
       { name: 'Watch', path: '/video', icon: 'pi pi-video' },
-      { name: 'Help', path: '/help', icon: 'pi pi-question-circle' },
+      { name: 'My playlists', path: '/playlists', icon: 'pi pi-list' },
     ],
   },
 ])
@@ -72,6 +72,19 @@ const adminNavigationSections = ref([
     ],
   },
   {
+    title: 'Manage Video',
+    isOpen: false,
+    items: [
+      { name: 'Add, edit or delete', path: '/admin/video', icon: 'pi pi-video' }
+      ],
+  },
+  {
+    title: 'Settings',
+    isOpen: false,
+    items: [
+      { name: 'Profile', path: '/admin/profile', icon: 'pi pi-cog' },
+      { name: 'Users', path: '/admin/users', icon: 'pi pi-users' },
+    ],
     title: 'Manage Quizzes',
     isOpen: false,
     items: [{ name: 'Quizzes', path: '/admin/quizes', icon: 'pi pi-file-edit' }],

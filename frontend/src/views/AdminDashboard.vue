@@ -26,6 +26,15 @@ const communityStats = ref({
   topContributor: ''
 })
 
+// Video management statistics
+const videoStats = ref({
+  totalVideos: 0,
+  totalPlaylists: 0,
+  videosAddedThisMonth: 0,
+  playlistsAddedThisMonth: 0,
+  mostWatchedVideo: null
+})
+
 const loading = ref(true)
 const error = ref(null)
 
@@ -38,6 +47,10 @@ const fetchDashboardStats = async () => {
     const data = await res.json()
     flashcardStats.value = data.flashcards
     communityStats.value = data.community
+    // Video stats are available but not displayed for now
+    if (data.videos) {
+      videoStats.value = data.videos
+    }
   } catch (e) {
     error.value = e.message
   } finally {
@@ -54,7 +67,7 @@ const manageLinks = ref([
     description: 'Edit, delete or create new flashcard sets for users',
     icon: 'pi pi-book',
     color: 'bg-blue-500',
-    link: '/admin/flashcards',
+    link: '/admin/flashcard',
   },
   {
     id: 'manage-community',
@@ -63,6 +76,14 @@ const manageLinks = ref([
     icon: 'pi pi-comments',
     color: 'bg-amber-500',
     link: '/admin/forum',
+  },
+  {
+    id: 'manage-videos',
+    title: 'Manage Videos',
+    description: 'Add, edit, and delete educational videos for learners',
+    icon: 'pi pi-video',
+    color: 'bg-purple-500',
+    link: '/admin/video',
   },
 ])
 </script>
@@ -80,7 +101,7 @@ const manageLinks = ref([
       <!-- Quick Manage Modules -->
       <div class="mb-10">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Management</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <RouterLink
             v-for="module in manageLinks"
             :key="module.id"
@@ -162,6 +183,35 @@ const manageLinks = ref([
           <div>
             <div class="text-lg font-semibold text-amber-700 mt-4">New Users This Week</div>
             <div class="text-gray-600">{{ communityStats.newUsers }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Module Section -->
+      <div class="mb-10">
+        <h2 class="text-xl font-semibold text-purple-700 mb-4 flex items-center">
+          <i class="pi pi-video mr-2"></i> Video Module Overview
+        </h2>
+        <div class="bg-white rounded-xl shadow-sm border border-purple-100 p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <div class="text-3xl font-bold text-purple-600">{{ videoStats.totalVideos }}</div>
+            <div class="text-gray-700 mt-1">Total Videos</div>
+          </div>
+          <div>
+            <div class="text-3xl font-bold text-purple-600">{{ videoStats.totalPlaylists }}</div>
+            <div class="text-gray-700 mt-1">Total Playlists</div>
+          </div>
+          <div>
+            <div class="text-3xl font-bold text-purple-600">{{ videoStats.videosAddedThisMonth }}</div>
+            <div class="text-gray-700 mt-1">Videos Added This Month</div>
+          </div>
+          <div>
+            <div class="text-3xl font-bold text-purple-600">{{ videoStats.playlistsAddedThisMonth }}</div>
+            <div class="text-gray-700 mt-1">Playlists Added This Month</div>
+          </div>
+          <div>
+            <div class="text-lg font-semibold text-purple-700 mt-4">Most Watched Video</div>
+            <div class="text-gray-600">{{ videoStats.mostWatchedVideo || 'No data available' }}</div>
           </div>
         </div>
       </div>

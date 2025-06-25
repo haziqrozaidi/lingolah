@@ -1,6 +1,4 @@
 const { PrismaClient } = require("../generated/prisma");
-const { faker } = require("@faker-js/faker");
-
 const prisma = new PrismaClient();
 
 async function main() {
@@ -345,31 +343,24 @@ async function main() {
   const videos = await Promise.all([
     prisma.video.create({
       data: {
-        title: "Malay Alphabet Pronunciation",
-        url: "https://example.com/videos/malay-alphabet.mp4",
-        description: "Learn how to pronounce the Malay alphabet correctly",
-        topic: "Pronunciation",
-        subtitles: "malay-alphabet-subtitles.vtt",
+        title: "Nasi lemak",
+        url: "https://www.youtube.com/watch?v=RLUGJFuvvDc",
+        description: "Learn how to cook Nasi lemak, a popular Malaysian dish.",
+        topic: "Food",
+        subtitles: "",
       },
     }),
     prisma.video.create({
       data: {
-        title: "Basic Malay Conversation Practice",
-        url: "https://example.com/videos/malay-conversation.mp4",
-        description: "Practice basic conversation patterns in Malay",
-        topic: "Conversation",
-        subtitles: "malay-conversation-subtitles.vtt",
+        title: "Tioman Island",
+        url: "https://www.youtube.com/watch?v=4tXmFMo03QA",
+        description:
+          "Explore the beauty of Tioman Island, a tropical paradise in Malaysia.",
+        topic: "Travel",
+        subtitles: "",
       },
     }),
-    prisma.video.create({
-      data: {
-        title: "Malay Verb Conjugation",
-        url: "https://example.com/videos/malay-verbs.mp4",
-        description: "Understanding how verbs work in Malay language",
-        topic: "Grammar",
-        subtitles: "malay-verbs-subtitles.vtt",
-      },
-    }),
+
   ]);
 
   console.log("Videos created:", videos);
@@ -431,6 +422,7 @@ async function main() {
   });
 
   console.log("Report created:", report);
+
 
   // Quiz 1: MCQ Type
   const mcqQuiz = await prisma.quiz.create({

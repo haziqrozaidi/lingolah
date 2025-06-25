@@ -17,11 +17,14 @@ const flashcardRoutes = require('./routes/flashcards');
 var adminDashboard = require('./routes/adminDashboard'); 
 var quizRouter = require('./routes/quiz');
 const progressRoutes = require('./routes/progress');
+const videosRouter = require('./routes/videos');
+const playlistsRouter = require('./routes/playlists');
 
 var app = express();
 
 app.use('/api/community', communityRouter);
 app.use('/api/admin/forum', adminForumRouter);
+app.use(cors());
 app.use(cors());
 app.use(logger('dev'));
 app.use(express.json());
@@ -39,5 +42,7 @@ app.use('/flashcard-sets', flashcardSetsRouter);
 app.use('/flashcards', flashcardRoutes);
 app.use('/api/admin', adminDashboard);
 app.use('/progress', progressRoutes);
+app.use('/api/videos', videosRouter);
+app.use('/api/playlists', playlistsRouter);
 
 module.exports = app;
