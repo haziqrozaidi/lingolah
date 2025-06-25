@@ -2,21 +2,23 @@ var express = require("express");
 var router = express.Router();
 const { PrismaClient } = require("../generated/prisma");
 const prisma = new PrismaClient();
+const { requireAuth } = require("@clerk/express");
 const requireAdmin = require("../middleware/requireAdmin");
 const { findUserByClerkId } = require("../utils/userHelpers");
 const cors = require('cors');
-
-// Apply CORS ONLY to this router
+router.use(express.json());
+router.use(express.urlencoded({ extended: false }));
 router.use(cors({
   origin: 'http://localhost:5173',
   credentials: true
 }));
+
 // --- ADMIN/MANAGER ROUTES ---
 
 /**
  * List members (pending or accepted)
  */
-router.get("/:communityId/members", requireAdmin, async (req, res) => {
+router.get("/:communityId/members", requireAuth(), requireAdmin, async (req, res) => {
   const { communityId } = req.params;
   const { status } = req.query; // 'pending' or 'accepted'
   const members = await prisma.communityMember.findMany({
@@ -34,12 +36,18 @@ router.get("/:communityId/members", requireAdmin, async (req, res) => {
  */
 router.post(
   "/:communityId/members/:userId/approve",
-  requireAdmin,
+  requireAuth(), requireAdmin,
   async (req, res) => {
     const { communityId, userId } = req.params;
+    // Update status to accepted
     const member = await prisma.communityMember.update({
       where: { userId_communityId: { userId, communityId } },
       data: { status: "accepted" },
+    });
+    // FIX: Only increment memberCount on approval
+    await prisma.community.update({
+      where: { id: communityId },
+      data: { memberCount: { increment: 1 } },
     });
     res.json({ member });
   }
@@ -50,9 +58,10 @@ router.post(
  */
 router.post(
   "/:communityId/members/:userId/reject",
-  requireAdmin,
+  requireAuth(), requireAdmin,
   async (req, res) => {
     const { communityId, userId } = req.params;
+    // Delete pending member, NO decrement of memberCount needed (was not incremented on request)
     await prisma.communityMember.delete({
       where: { userId_communityId: { userId, communityId } },
     });
@@ -65,11 +74,17 @@ router.post(
  */
 router.delete(
   "/:communityId/members/:userId",
-  requireAdmin,
+  requireAuth(), requireAdmin,
   async (req, res) => {
     const { communityId, userId } = req.params;
+    // Delete from members table
     await prisma.communityMember.delete({
       where: { userId_communityId: { userId, communityId } },
+    });
+    // Decrement member count (only for accepted members)
+    await prisma.community.update({
+      where: { id: communityId },
+      data: { memberCount: { decrement: 1 } }
     });
     res.json({ success: true });
   }
@@ -78,7 +93,7 @@ router.delete(
 /**
  * Disband (delete) a community
  */
-router.delete("/:communityId", requireAdmin, async (req, res) => {
+router.delete("/:communityId", requireAuth(), requireAdmin, async (req, res) => {
   const { communityId } = req.params;
   await prisma.communityMember.deleteMany({ where: { communityId } });
   await prisma.community.delete({ where: { id: communityId } });
@@ -88,9 +103,8 @@ router.delete("/:communityId", requireAdmin, async (req, res) => {
 /**
  * List all communities managed by the current admin (legacy route)
  */
-router.get("/admin", requireAdmin, async (req, res) => {
+router.get("/admin", requireAuth(), requireAdmin, async (req, res) => {
   try {
-    // Use user info from middleware (req.dbUser or req.user)
     const user = req.dbUser || req.user;
     if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
@@ -109,7 +123,7 @@ router.get("/admin", requireAdmin, async (req, res) => {
 /**
  * List all communities managed by the current admin (standard route)
  */
-router.get("/managed", requireAdmin, async (req, res) => {
+router.get("/managed", requireAuth(), requireAdmin, async (req, res) => {
   const user = req.dbUser || req.user;
   try {
     const communities = await prisma.community.findMany({
@@ -127,7 +141,7 @@ router.get("/managed", requireAdmin, async (req, res) => {
 /**
  * Create a community (admin)
  */
-router.post("/create", requireAdmin, async (req, res) => {
+router.post("/create", requireAuth(), requireAdmin, async (req, res) => {
   try {
     const { name, establishedDate } = req.body;
     const user = req.dbUser || req.user; // Set by middleware
@@ -140,11 +154,11 @@ router.post("/create", requireAdmin, async (req, res) => {
     const community = await prisma.community.create({
       data: {
         name,
-        establishedBy: user.id, // use internal PK for establishedBy
+        establishedBy: user.id,
         establishedDate: new Date(establishedDate),
         memberCount: 1,
         members: {
-          create: { userId: user.id, status: "accepted" }, // <-- set status here!
+          create: { userId: user.id, status: "accepted" },
         },
       },
       include: {
@@ -155,7 +169,6 @@ router.post("/create", requireAdmin, async (req, res) => {
     res.status(201).json({ community });
   } catch (err) {
     console.error(err);
-    // Handle foreign key errors gracefully
     if (err.code === "P2003") {
       return res
         .status(400)
@@ -173,11 +186,9 @@ router.get("/available", async (req, res) => {
   if (!clerkUserId)
     return res.status(400).json({ error: "clerkUserId required" });
 
-  // Find user in DB
   const user = await prisma.user.findFirst({ where: { clerkUserId } });
   if (!user) return res.status(404).json({ error: "User not found" });
 
-  // Find communities the user hasn't joined
   const joinedIds = (
     await prisma.communityMember.findMany({
       where: { userId: user.id },
@@ -224,23 +235,20 @@ router.post("/join", async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
     const dbUserId = user.id;
-    // Add user as community member (linked by DB user id, not clerk user id)
+    // FIX: Add user as community member with status "pending", do NOT increment memberCount here!
     const newMember = await prisma.communityMember.create({
       data: {
         communityId,
         userId: dbUserId,
+        status: "pending",
       },
     });
 
-    // Optional: increment community memberCount
-    await prisma.community.update({
-      where: { id: communityId },
-      data: { memberCount: { increment: 1 } },
-    });
+    // Do NOT increment community memberCount here!
 
     res
       .status(201)
-      .json({ message: "Joined community successfully", member: newMember });
+      .json({ message: "Request to join community submitted", member: newMember });
   } catch (err) {
     console.error(err);
     if (err.code === "P2003") {
@@ -268,7 +276,7 @@ router.get("/joined", async (req, res) => {
   res.json({
     communities: joinedCommunities.map((cm) => ({
       ...cm.community,
-      status: cm.status, // add status (pending/accepted)
+      status: cm.status,
     })),
   });
 });
