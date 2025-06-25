@@ -5,16 +5,16 @@ import 'vue-plyr/dist/vue-plyr.css'
 
 const route = useRoute()
 const videoId = computed(() => route.query.id || 'bTqVqk7FSmY')
-const videoData = ref(null) // Pour stocker les détails de la vidéo
+const videoData = ref(null) // To store video details
 
-// Récupérer les détails de la vidéo depuis l'API
+// Fetch video details from API
 async function fetchVideoDetails() {
   try {
-    // Récupérer l'ID YouTube depuis la route
+    // Get YouTube ID from route
     const youtubeId = route.query.id
     
     if (youtubeId) {
-      // Appel à l'API pour récupérer les détails de la vidéo par ID YouTube
+      // API call to fetch video details by YouTube ID
       const response = await fetch(`http://localhost:3000/api/videos/youtube/${youtubeId}`)
       
       if (response.ok) {
@@ -29,12 +29,12 @@ async function fetchVideoDetails() {
   }
 }
 
-// Charger les détails au montage
+// Load details on mount
 onMounted(() => {
   fetchVideoDetails()
 })
 
-// Recharger les détails quand l'ID change
+// Reload details when ID changes
 watch(() => route.query.id, () => {
   fetchVideoDetails()
 })
@@ -42,7 +42,7 @@ watch(() => route.query.id, () => {
 
 <template>
   <div class="container mx-auto px-4 py-6">
-    <!-- Utiliser le titre de la vidéo s'il est disponible -->
+    <!-- Use video title if available -->
     <h1 class="text-2xl font-bold text-gray-800 mb-2">
       {{ videoData?.title || 'YouTube Video' }}
     </h1>
@@ -53,7 +53,7 @@ watch(() => route.query.id, () => {
       </vue-plyr>
     </div>
     
-    <!-- Afficher la description de la vidéo -->
+    <!-- Display video description -->
     <div v-if="videoData?.description" class="bg-white rounded-lg shadow-md p-4 mb-4">
       <h2 class="text-lg font-semibold mb-2">Description</h2>
       <p class="text-gray-700 whitespace-pre-line">{{ videoData.description }}</p>
