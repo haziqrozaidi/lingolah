@@ -42,7 +42,7 @@ const navigationSections = ref([
     isOpen: false,
     items: [
       { name: 'Watch', path: '/video', icon: 'pi pi-video' },
-      { name: 'Help', path: '/help', icon: 'pi pi-question-circle' },
+      { name: 'My playlists', path: '/playlists', icon: 'pi pi-list' },
     ],
   },
 ])

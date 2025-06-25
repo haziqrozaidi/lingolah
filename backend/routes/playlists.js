@@ -67,6 +67,66 @@ router.get('/:playlistId', async (req, res) => {
   }
 })
 
+// Get a specific playlist with videos and watch status for a user
+router.get('/:playlistId/with-progress/:clerkUserId', async (req, res) => {
+  try {
+    const { playlistId, clerkUserId } = req.params
+    
+    // First, find the user by clerkUserId
+    const user = await prisma.user.findFirst({
+      where: { clerkUserId }
+    })
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' })
+    }
+    
+    const playlist = await prisma.videoPlaylist.findUnique({
+      where: { id: playlistId },
+      include: {
+        user: {
+          select: { id: true, username: true }
+        },
+        videos: {
+          include: {
+            video: {
+              include: {
+                progress: {
+                  where: {
+                    userId: user.id
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+    
+    if (!playlist) {
+      return res.status(404).json({ error: 'Playlist not found' })
+    }
+    
+    // Transform the data to include watched status for each video
+    const playlistWithWatchStatus = {
+      ...playlist,
+      videos: playlist.videos.map(item => ({
+        ...item,
+        video: {
+          ...item.video,
+          watched: item.video.progress.length > 0,
+          watchDate: item.video.progress.length > 0 ? item.video.progress[0].watchDate : null
+        }
+      }))
+    }
+    
+    res.json(playlistWithWatchStatus)
+  } catch (error) {
+    console.error('Error fetching playlist with progress:', error)
+    res.status(500).json({ error: 'Failed to fetch playlist' })
+  }
+})
+
 // Create a new playlist
 router.post('/', async (req, res) => {
   try {

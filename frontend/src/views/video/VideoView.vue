@@ -1,10 +1,13 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useUser } from '@clerk/vue'
 import Dropdown from 'primevue/dropdown'
 import AddToPlaylistModal from '@/components/video/AddToPlaylistModal.vue'
+import { getVideosWithWatchStatus, getAllVideos, markVideoAsWatched } from '@/services/videoService'
 
 const router = useRouter()
+const { user } = useUser()
 const videos = ref([]) 
 const searchQuery = ref('')
 const expandedCategories = ref({})
@@ -13,10 +16,26 @@ const expandedCategories = ref({})
 const showPlaylistModal = ref(false)
 const selectedVideoForPlaylist = ref(null)
 
-// Fetch all videos from the API
+// Fetch all videos from the API with watch status
 onMounted(async () => {
-  const res = await fetch('http://localhost:3000/api/videos')
-  videos.value = await res.json()
+  try {
+    if (user.value?.id) {
+      // Get videos with watch status for logged-in user
+      videos.value = await getVideosWithWatchStatus(user.value.id)
+    } else {
+      // Get all videos without watch status for anonymous users
+      videos.value = await getAllVideos()
+    }
+  } catch (error) {
+    console.error('Error fetching videos:', error)
+    // Fallback to basic video fetch
+    try {
+      const res = await fetch('http://localhost:3000/api/videos')
+      videos.value = await res.json()
+    } catch (fallbackError) {
+      console.error('Fallback fetch also failed:', fallbackError)
+    }
+  }
 })
 
 // categorize videos by topic
@@ -94,7 +113,7 @@ const getVisibleVideos = (category) => {
 }
 
 // Function to launch the video in the YoutubeLooper
-const playVideo = (videoId) => {
+const playVideo = async (videoId) => {
   // Get the corresponding video using the correct ID field
   const video = videos.value.find(v => v.id === videoId)
 
@@ -102,6 +121,21 @@ const playVideo = (videoId) => {
   const youtubeId = video?.url?.split('v=')[1]?.split('&')[0]
   
   if (youtubeId) {
+    // Mark video as watched if user is logged in
+    if (user.value?.id && video) {
+      try {
+        await markVideoAsWatched(user.value.id, video.id)
+        // Update local state to reflect watched status
+        const videoIndex = videos.value.findIndex(v => v.id === video.id)
+        if (videoIndex !== -1) {
+          videos.value[videoIndex].watched = true
+          videos.value[videoIndex].watchDate = new Date()
+        }
+      } catch (error) {
+        console.error('Error marking video as watched:', error)
+      }
+    }
+    
     // Redirect to the YoutubeLooper with the YouTube ID as a parameter
     router.push({
       name: 'youtube-looper',
@@ -224,6 +258,7 @@ const closePlaylistModal = () => {
                 class="w-full h-44 object-cover"
                 @error="handleImageError"
               />
+              
               <div
                 class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               >
@@ -242,9 +277,18 @@ const closePlaylistModal = () => {
 
             <!-- Video Info -->
             <div class="p-4">
-              <h3 class="text-gray-800 font-medium mb-2 line-clamp-2" :title="video.title">
-                {{ video.title }}
-              </h3>
+              <div class="flex items-start justify-between mb-2">
+                <h3 class="text-gray-800 font-medium line-clamp-2 flex-1" :title="video.title">
+                  {{ video.title }}
+                </h3>
+                <div
+                  v-if="video.watched"
+                  class="ml-2 text-green-600 flex-shrink-0"
+                  :title="`Watched on ${new Date(video.watchDate).toLocaleDateString()}`"
+                >
+                  <i class="pi pi-check-circle text-sm"></i>
+                </div>
+              </div>
               <div class="flex items-center justify-between mb-3">
                 <span
                   class="text-xs font-medium rounded-full px-2 py-1"

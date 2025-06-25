@@ -13,6 +13,101 @@ router.get("/", async (req, res) => {
   }
 });
 
+// Get all videos with watch status for a specific user
+router.get("/with-progress/:clerkUserId", async (req, res) => {
+  try {
+    const { clerkUserId } = req.params;
+
+    // First, find the user by clerkUserId
+    const user = await prisma.user.findFirst({
+      where: { clerkUserId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Get all videos with their progress status for this user
+    const videos = await prisma.video.findMany({
+      include: {
+        progress: {
+          where: {
+            userId: user.id
+          }
+        }
+      }
+    });
+
+    // Transform the data to include a simple 'watched' boolean
+    const videosWithWatchStatus = videos.map(video => ({
+      ...video,
+      watched: video.progress.length > 0,
+      watchDate: video.progress.length > 0 ? video.progress[0].watchDate : null
+    }));
+
+    res.json(videosWithWatchStatus);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Mark a video as watched by a user
+router.post("/mark-watched", async (req, res) => {
+  try {
+    const { clerkUserId, videoId } = req.body;
+
+    if (!clerkUserId || !videoId) {
+      return res.status(400).json({ error: 'User ID and Video ID are required' });
+    }
+
+    // First, find the user by clerkUserId
+    const user = await prisma.user.findFirst({
+      where: { clerkUserId }
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if progress already exists
+    const existingProgress = await prisma.videoProgress.findFirst({
+      where: {
+        userId: user.id,
+        videoId
+      }
+    });
+
+    if (existingProgress) {
+      // Update existing progress
+      await prisma.videoProgress.update({
+        where: {
+          userId_videoId: {
+            userId: user.id,
+            videoId
+          }
+        },
+        data: {
+          watchDate: new Date()
+        }
+      });
+    } else {
+      // Create new progress record
+      await prisma.videoProgress.create({
+        data: {
+          userId: user.id,
+          videoId,
+          watchDate: new Date()
+        }
+      });
+    }
+
+    res.json({ success: true, message: 'Video marked as watched' });
+  } catch (error) {
+    console.error('Error marking video as watched:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get a video by its YouTube ID
 router.get("/youtube/:youtubeId", async (req, res) => {
   try {

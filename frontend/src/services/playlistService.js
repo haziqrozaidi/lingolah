@@ -28,6 +28,20 @@ export const getPlaylist = async (playlistId) => {
   }
 }
 
+// Get a specific playlist with videos and watch status for a user
+export const getPlaylistWithWatchStatus = async (playlistId, clerkUserId) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/${playlistId}/with-progress/${clerkUserId}`)
+    if (!response.ok) {
+      throw new Error('Failed to fetch playlist with watch status')
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching playlist with watch status:', error)
+    throw error
+  }
+}
+
 // Create a new playlist
 export const createPlaylist = async (clerkUserId, title) => {
   try {

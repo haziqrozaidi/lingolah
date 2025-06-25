@@ -3,12 +3,15 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
-import { getPlaylist, removeVideoFromPlaylist } from '@/services/playlistService'
+import { useUser } from '@clerk/vue'
+import { getPlaylist, getPlaylistWithWatchStatus, removeVideoFromPlaylist } from '@/services/playlistService'
+import { markVideoAsWatched } from '@/services/videoService'
 
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
 const confirm = useConfirm()
+const { user } = useUser()
 
 const playlist = ref(null)
 const loading = ref(false)
@@ -17,7 +20,12 @@ const loading = ref(false)
 const loadPlaylist = async () => {
   loading.value = true
   try {
-    playlist.value = await getPlaylist(route.params.id)
+    // Use playlist with watch status if user is logged in
+    if (user.value?.id) {
+      playlist.value = await getPlaylistWithWatchStatus(route.params.id, user.value.id)
+    } else {
+      playlist.value = await getPlaylist(route.params.id)
+    }
   } catch {
     toast.add({
       severity: 'error',
@@ -32,10 +40,21 @@ const loadPlaylist = async () => {
 }
 
 // Play video
-const playVideo = (video) => {
+const playVideo = async (video) => {
   const youtubeId = video.url?.split('v=')[1]?.split('&')[0]
   
   if (youtubeId) {
+    // Mark video as watched if user is logged in
+    if (user.value?.id) {
+      try {
+        await markVideoAsWatched(user.value.id, video.id)
+        // Reload playlist to update watched status
+        await loadPlaylist()
+      } catch (error) {
+        console.error('Error marking video as watched:', error)
+      }
+    }
+    
     router.push({
       name: 'youtube-looper',
       query: { id: youtubeId }
@@ -131,8 +150,7 @@ onMounted(loadPlaylist)
             v-for="(item, index) in playlist.videos"
             :key="item.video.id"
             class="video-card rounded-lg overflow-hidden shadow-md bg-white hover:shadow-lg transition-shadow duration-300"
-          >
-            <!-- Thumbnail with Play Button Overlay -->
+          >            <!-- Thumbnail with Play Button Overlay -->
             <div class="relative group cursor-pointer" @click="playVideo(item.video)">
               <img 
                 :src="`https://img.youtube.com/vi/${item.video.url?.split('v=')[1]?.split('&')[0]}/hqdefault.jpg`"
@@ -140,6 +158,7 @@ onMounted(loadPlaylist)
                 class="w-full h-44 object-cover"
                 @error="handleImageError"
               />
+              
               <div
                 class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
               >
@@ -156,13 +175,20 @@ onMounted(loadPlaylist)
               >
                 {{ index + 1 }}
               </div>
-            </div>
-
-            <!-- Video Info -->
+            </div>            <!-- Video Info -->
             <div class="p-4">
-              <h3 class="text-gray-800 font-medium mb-2 line-clamp-2" :title="item.video.title">
-                {{ item.video.title }}
-              </h3>
+              <div class="flex items-start justify-between mb-2">
+                <h3 class="text-gray-800 font-medium line-clamp-2 flex-1" :title="item.video.title">
+                  {{ item.video.title }}
+                </h3>
+                <div
+                  v-if="item.video.watched"
+                  class="ml-2 text-green-600 flex-shrink-0"
+                  :title="`Watched on ${new Date(item.video.watchDate).toLocaleDateString()}`"
+                >
+                  <i class="pi pi-check-circle text-sm"></i>
+                </div>
+              </div>
               
               <div class="flex items-center justify-between mb-3">
                 <span
