@@ -31,9 +31,8 @@ const videoStats = ref({
   totalVideos: 0,
   totalPlaylists: 0,
   videosAddedThisMonth: 0,
-  totalWatchTime: 0,
-  mostWatchedVideo: '',
-  activeViewers: 0
+  playlistsAddedThisMonth: 0,
+  mostWatchedVideo: null
 })
 
 const loading = ref(true)
@@ -184,6 +183,35 @@ const manageLinks = ref([
           <div>
             <div class="text-lg font-semibold text-amber-700 mt-4">New Users This Week</div>
             <div class="text-gray-600">{{ communityStats.newUsers }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Video Module Section -->
+      <div class="mb-10">
+        <h2 class="text-xl font-semibold text-purple-700 mb-4 flex items-center">
+          <i class="pi pi-video mr-2"></i> Video Module Overview
+        </h2>
+        <div class="bg-white rounded-xl shadow-sm border border-purple-100 p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <div class="text-3xl font-bold text-purple-600">{{ videoStats.totalVideos }}</div>
+            <div class="text-gray-700 mt-1">Total Videos</div>
+          </div>
+          <div>
+            <div class="text-3xl font-bold text-purple-600">{{ videoStats.totalPlaylists }}</div>
+            <div class="text-gray-700 mt-1">Total Playlists</div>
+          </div>
+          <div>
+            <div class="text-3xl font-bold text-purple-600">{{ videoStats.videosAddedThisMonth }}</div>
+            <div class="text-gray-700 mt-1">Videos Added This Month</div>
+          </div>
+          <div>
+            <div class="text-3xl font-bold text-purple-600">{{ videoStats.playlistsAddedThisMonth }}</div>
+            <div class="text-gray-700 mt-1">Playlists Added This Month</div>
+          </div>
+          <div>
+            <div class="text-lg font-semibold text-purple-700 mt-4">Most Watched Video</div>
+            <div class="text-gray-600">{{ videoStats.mostWatchedVideo || 'No data available' }}</div>
           </div>
         </div>
       </div>

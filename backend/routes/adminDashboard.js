@@ -11,8 +11,7 @@ router.use(cors({
 }));
 // GET /api/admin/dashboard
 router.get('/dashboard', async (req, res) => {
-  try {
-    // FlashcardSet and Flashcard stats
+  try {    // FlashcardSet and Flashcard stats
     const [
       totalSets,
       totalCards,
@@ -27,7 +26,13 @@ router.get('/dashboard', async (req, res) => {
       resolvedReports,
       newPostsThisWeek,
       newUsers,
-      topContributor
+      topContributor,
+      // Video stats
+      totalVideos,
+      totalPlaylists,
+      videosAddedThisMonth,
+      playlistsAddedThisMonth,
+      mostWatchedVideo
     ] = await Promise.all([
       // FlashcardSet stats
       prisma.flashcardSet.count(),
@@ -96,17 +101,39 @@ router.get('/dashboard', async (req, res) => {
             gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
           }
         }
-      }),
-      prisma.user.findFirst({
+      }),      prisma.user.findFirst({
         orderBy: {
           posts: {
             _count: 'desc'
           }
         }
       }),
-    ]);
-
-    res.json({
+      // Video stats
+      prisma.video.count(),
+      prisma.videoPlaylist.count(),
+      prisma.video.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+          }
+        }
+      }),
+      prisma.videoPlaylist.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+          }
+        }
+      }),
+      // Most watched video: by counting progress entries
+      prisma.video.findFirst({
+        orderBy: {
+          progress: {
+            _count: 'desc'
+          }
+        }
+      }),
+    ]);    res.json({
       flashcards: {
         totalSets,
         totalCards,
@@ -123,6 +150,13 @@ router.get('/dashboard', async (req, res) => {
         newPostsThisWeek,
         newUsers,
         topContributor: topContributor ? topContributor.username : null
+      },
+      videos: {
+        totalVideos,
+        totalPlaylists,
+        videosAddedThisMonth,
+        playlistsAddedThisMonth,
+        mostWatchedVideo: mostWatchedVideo ? mostWatchedVideo.title : null
       }
     });
   } catch (err) {
