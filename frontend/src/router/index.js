@@ -92,7 +92,7 @@ const router = createRouter({
       name: 'admin-dashboard',
       component: AdminDashboard,
       meta: { requiresAdmin: true }
-    }
+    },
     {
       path: '/video/looper',
       name: 'youtube-looper',
@@ -102,6 +102,7 @@ const router = createRouter({
       path: '/admin/video',
       name: 'admin-video',
       component: AdminVideoView,
+      meta: { requiresAdmin: true }
     },
   ],
 })

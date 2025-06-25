@@ -26,6 +26,16 @@ const communityStats = ref({
   topContributor: ''
 })
 
+// Video management statistics
+const videoStats = ref({
+  totalVideos: 0,
+  totalPlaylists: 0,
+  videosAddedThisMonth: 0,
+  totalWatchTime: 0,
+  mostWatchedVideo: '',
+  activeViewers: 0
+})
+
 const loading = ref(true)
 const error = ref(null)
 
@@ -38,6 +48,10 @@ const fetchDashboardStats = async () => {
     const data = await res.json()
     flashcardStats.value = data.flashcards
     communityStats.value = data.community
+    // Video stats are available but not displayed for now
+    if (data.videos) {
+      videoStats.value = data.videos
+    }
   } catch (e) {
     error.value = e.message
   } finally {
@@ -54,7 +68,7 @@ const manageLinks = ref([
     description: 'Edit, delete or create new flashcard sets for users',
     icon: 'pi pi-book',
     color: 'bg-blue-500',
-    link: '/admin/flashcards',
+    link: '/admin/flashcard',
   },
   {
     id: 'manage-community',
@@ -63,6 +77,14 @@ const manageLinks = ref([
     icon: 'pi pi-comments',
     color: 'bg-amber-500',
     link: '/admin/forum',
+  },
+  {
+    id: 'manage-videos',
+    title: 'Manage Videos',
+    description: 'Add, edit, and delete educational videos for learners',
+    icon: 'pi pi-video',
+    color: 'bg-purple-500',
+    link: '/admin/video',
   },
 ])
 </script>
@@ -80,7 +102,7 @@ const manageLinks = ref([
       <!-- Quick Manage Modules -->
       <div class="mb-10">
         <h2 class="text-xl font-semibold text-gray-800 mb-4">Quick Management</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <RouterLink
             v-for="module in manageLinks"
             :key="module.id"

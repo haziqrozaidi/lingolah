@@ -90,8 +90,8 @@ const getVisibleVideos = (category) => {
 
 // Function to launch the video in the YoutubeLooper
 const playVideo = (videoId) => {
-  // Get the corresponding video
-  const video = videos.value.find(v => v.video_id === videoId)
+  // Get the corresponding video using the correct ID field
+  const video = videos.value.find(v => v.id === videoId)
 
   // Extract YouTube ID from the URL
   const youtubeId = video?.url?.split('v=')[1]?.split('&')[0]
@@ -103,7 +103,7 @@ const playVideo = (videoId) => {
       query: { id: youtubeId }
     })
   } else {
-    console.error('Impossible d\'extraire l\'ID YouTube de la vidéo:', video)
+    console.error('Unable to extract YouTube ID from video:', video)
   }
 }
 
@@ -176,11 +176,11 @@ const handleImageError = (event) => {
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
           <div
             v-for="video in getVisibleVideos(category)"
-            :key="video.video_id"
+            :key="video.id"
             class="video-card rounded-lg overflow-hidden shadow-md bg-white hover:shadow-lg transition-shadow duration-300"
           >
             <!-- Thumbnail with Play Button Overlay -->
-            <div class="relative group cursor-pointer" @click="playVideo(video.video_id)">
+            <div class="relative group cursor-pointer" @click="playVideo(video.id)">
               <img 
                 :src="video.thumbnail" 
                 :alt="video.title" 
@@ -220,7 +220,7 @@ const handleImageError = (event) => {
                   {{ video.difficulty }}
                 </span>
                 <button
-                  @click.stop="playVideo(video.video_id)"
+                  @click.stop="playVideo(video.id)"
                   class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
                 >
                   Watch <i class="pi pi-caret-right ml-1"></i>

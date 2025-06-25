@@ -433,8 +433,3 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
-
-main().then(() => {
-  console.log("Seeding done");
-  prisma.$disconnect();
-});

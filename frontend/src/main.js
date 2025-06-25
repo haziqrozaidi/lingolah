@@ -5,6 +5,10 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { clerkPlugin } from '@clerk/vue'
 import PrimeVue from 'primevue/config'
+import ToastService from 'primevue/toastservice'
+import ConfirmationService from 'primevue/confirmationservice'
+import Toast from 'primevue/toast'
+import ConfirmDialog from 'primevue/confirmdialog'
 import Noir from './presets/Noir.js'
 import VuePlyr from 'vue-plyr'
 import 'vue-plyr/dist/vue-plyr.css'
@@ -27,6 +31,10 @@ app.use(PrimeVue, {
     preset: Noir,
   },
 })
+app.use(ToastService)
+app.use(ConfirmationService)
+app.component('PrimeToast', Toast)
+app.component('PrimeConfirmDialog', ConfirmDialog)
 app.use(clerkPlugin, { publishableKey: PUBLISHABLE_KEY })
 app.use(VuePlyr, {
   plyr: {}
