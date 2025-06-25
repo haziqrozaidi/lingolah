@@ -2,11 +2,16 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import Dropdown from 'primevue/dropdown'
+import AddToPlaylistModal from '@/components/video/AddToPlaylistModal.vue'
 
 const router = useRouter()
 const videos = ref([]) 
 const searchQuery = ref('')
 const expandedCategories = ref({})
+
+// Playlist modal state
+const showPlaylistModal = ref(false)
+const selectedVideoForPlaylist = ref(null)
 
 // Fetch all videos from the API
 onMounted(async () => {
@@ -112,14 +117,46 @@ const handleImageError = (event) => {
   // If the image fails to load, use a placeholder
   event.target.src = 'https://placehold.co/320x180/e0e0e0/cccccc?text=No+Thumbnail'
 }
+
+// Function to show add to playlist modal
+const showAddToPlaylist = (video) => {
+  selectedVideoForPlaylist.value = video
+  showPlaylistModal.value = true
+}
+
+// Function to close playlist modal
+const closePlaylistModal = () => {
+  showPlaylistModal.value = false
+  selectedVideoForPlaylist.value = null
+}
 </script>
 
 <template>
   <div class="video-library">
+    <!-- Toast Component for notifications -->
+    <PrimeToast />
+    
+    <!-- Add to Playlist Modal -->
+    <AddToPlaylistModal
+      :video="selectedVideoForPlaylist"
+      :show="showPlaylistModal"
+      @close="closePlaylistModal"
+    />
+    
     <!-- Page Header -->
     <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-800">Video Library</h1>
-      <p class="text-gray-600 mt-1">Enhance your language skills with our curated video content</p>
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Video Library</h1>
+          <p class="text-gray-600 mt-1">Enhance your language skills with our curated video content</p>
+        </div>
+        <router-link
+          to="/playlists"
+          class="bg-purple-600 hover:bg-purple-700 text-white font-medium px-4 py-2 rounded-lg transition-colors flex items-center"
+        >
+          <i class="pi pi-list mr-2"></i>My Playlists
+        </router-link>
+      </div>
     </div>
 
     <!-- Search and Filter Section -->
@@ -208,7 +245,7 @@ const handleImageError = (event) => {
               <h3 class="text-gray-800 font-medium mb-2 line-clamp-2" :title="video.title">
                 {{ video.title }}
               </h3>
-              <div class="flex items-center justify-between">
+              <div class="flex items-center justify-between mb-3">
                 <span
                   class="text-xs font-medium rounded-full px-2 py-1"
                   :class="{
@@ -224,6 +261,16 @@ const handleImageError = (event) => {
                   class="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
                 >
                   Watch <i class="pi pi-caret-right ml-1"></i>
+                </button>
+              </div>
+              
+              <!-- Action Buttons -->
+              <div class="flex space-x-2">
+                <button
+                  @click.stop="showAddToPlaylist(video)"
+                  class="flex-1 text-xs bg-purple-50 text-purple-600 hover:bg-purple-100 border border-purple-200 px-2 py-1.5 rounded transition-colors flex items-center justify-center"
+                >
+                  <i class="pi pi-plus mr-1"></i>Add to Playlist
                 </button>
               </div>
             </div>

@@ -17,6 +17,7 @@ const flashcardRoutes = require('./routes/flashcards');
 var adminDashboard = require('./routes/adminDashboard'); 
 const progressRoutes = require('./routes/progress');
 const videosRouter = require('./routes/videos');
+const playlistsRouter = require('./routes/playlists');
 
 var app = express();
 
@@ -40,5 +41,6 @@ app.use('/flashcards', flashcardRoutes);
 app.use('/api/admin', adminDashboard);
 app.use('/progress', progressRoutes);
 app.use('/api/videos', videosRouter);
+app.use('/api/playlists', playlistsRouter);
 
 module.exports = app;

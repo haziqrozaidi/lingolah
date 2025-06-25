@@ -15,6 +15,8 @@ import ManageFlashcardSet from '../views/flashcard/admin/FlashcardSetAdminPage.v
 import AdminDashboard from '@/views/AdminDashboard.vue'
 import YoutubeLooper from '../views/video/YoutubeLooper.vue'
 import AdminVideoView from '../views/video/AdminVideoView.vue'
+import PlaylistView from '../views/video/PlaylistView.vue'
+import PlaylistDetailView from '../views/video/PlaylistDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -103,6 +105,16 @@ const router = createRouter({
       name: 'admin-video',
       component: AdminVideoView,
       meta: { requiresAdmin: true }
+    },
+    {
+      path: '/playlists',
+      name: 'playlists',
+      component: PlaylistView,
+    },
+    {
+      path: '/playlists/:id',
+      name: 'playlist-detail',
+      component: PlaylistDetailView,
     },
   ],
 })

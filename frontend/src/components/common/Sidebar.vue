@@ -78,6 +78,21 @@ const adminNavigationSections = ref([
       { name: 'Community Delete', path: '/admin/community/delete', icon: 'pi pi-trash' },
     ],
   },
+  {
+    title: 'Manage Video',
+    isOpen: false,
+    items: [
+      { name: 'Add, edit or delete', path: '/admin/video', icon: 'pi pi-video' }
+      ],
+  },
+  {
+    title: 'Settings',
+    isOpen: false,
+    items: [
+      { name: 'Profile', path: '/admin/profile', icon: 'pi pi-cog' },
+      { name: 'Users', path: '/admin/users', icon: 'pi pi-users' },
+    ],
+  },
 ])
 
 // Toggle section collapse state
