@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUser } from '@clerk/vue'
 import Dropdown from 'primevue/dropdown'
+import Toast from 'primevue/toast'
 import AddToPlaylistModal from '@/components/video/AddToPlaylistModal.vue'
 import { getVideosWithWatchStatus, getAllVideos, markVideoAsWatched } from '@/services/videoService'
 
@@ -59,7 +60,45 @@ const videoCategories = computed(() => {
   return Object.entries(categories).map(([title, videos]) => ({ title, videos }))
 })
 
-// Filter categories according to the search
+// Function to sort videos array based on selected sort option
+const sortVideos = (videos) => {
+  if (!selectedSort.value) return videos
+
+  const [field, direction] = selectedSort.value.split('_')
+  
+  return [...videos].sort((a, b) => {
+    let valueA, valueB
+    
+    switch (field) {
+      case 'createdAt':
+        valueA = new Date(a.createdAt)
+        valueB = new Date(b.createdAt)
+        break
+      case 'watchDate':
+        // Put unwatched videos at the end when sorting by watch date
+        if (!a.watched && !b.watched) return 0
+        if (!a.watched) return 1
+        if (!b.watched) return -1
+        valueA = new Date(a.watchDate)
+        valueB = new Date(b.watchDate)
+        break
+      case 'title':
+        valueA = a.title.toLowerCase()
+        valueB = b.title.toLowerCase()
+        break
+      default:
+        return 0
+    }
+    
+    if (direction === 'asc') {
+      return valueA < valueB ? -1 : valueA > valueB ? 1 : 0
+    } else {
+      return valueA > valueB ? -1 : valueA < valueB ? 1 : 0
+    }
+  })
+}
+
+// Filter categories according to the search and apply sorting
 const filteredCategories = computed(() => {
   let categories = videoCategories.value
 
@@ -82,6 +121,14 @@ const filteredCategories = computed(() => {
       .filter(Boolean)
   }
 
+  // Apply sorting to each category's videos
+  if (selectedSort.value) {
+    categories = categories.map(category => ({
+      ...category,
+      videos: sortVideos(category.videos)
+    }))
+  }
+
   return categories
 })
 
@@ -96,6 +143,17 @@ const topicOptions = computed(() =>
 
 // Selected topic state
 const selectedTopic = ref(null)
+
+// Sorting state
+const selectedSort = ref(null)
+const sortOptions = ref([
+  { label: 'Alphabetical (A-Z)', value: 'title_asc' },
+  { label: 'Alphabetical (Z-A)', value: 'title_desc' },
+  { label: 'Creation Date (Newest first)', value: 'createdAt_desc' },
+  { label: 'Creation Date (Oldest first)', value: 'createdAt_asc' },
+  { label: 'Recently Watched', value: 'watchDate_desc' },
+  
+])
 
 // Function to toggle the expanded view of a category
 const toggleCategoryExpand = (categoryTitle) => {
@@ -168,7 +226,7 @@ const closePlaylistModal = () => {
 <template>
   <div class="video-library">
     <!-- Toast Component for notifications -->
-    <PrimeToast />
+    <Toast />
     
     <!-- Add to Playlist Modal -->
     <AddToPlaylistModal
@@ -219,11 +277,17 @@ const closePlaylistModal = () => {
           showClear
           dropdownIcon="pi pi-filter"
         />
-        <button
-          class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
-        >
-          <i class="pi pi-sort-alt mr-2"></i>Sort
-        </button>
+        <Dropdown
+          v-model="selectedSort"
+          :options="sortOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Sort videos"
+          class="w-56"
+          style="min-width: 200px"
+          showClear
+          dropdownIcon="pi pi-sort-alt"
+        />
       </div>
     </div>
 
