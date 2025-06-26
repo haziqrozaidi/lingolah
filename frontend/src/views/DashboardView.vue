@@ -79,7 +79,7 @@ const modules = ref([
     description: 'Test your knowledge with fun quizzes',
     icon: 'pi pi-check-square',
     color: 'bg-green-500',
-    link: '/quizzes',
+    link: '/quizes',
   },
   {
     id: 'videos',
@@ -87,7 +87,7 @@ const modules = ref([
     description: 'Watch instructional videos by native speakers',
     icon: 'pi pi-video',
     color: 'bg-purple-500',
-    link: '/videos',
+    link: '/video',
   },
   {
     id: 'forum',

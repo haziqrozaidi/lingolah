@@ -2,7 +2,13 @@
   <div class="card">
     <h1>Questions</h1>
     <div class="grid-container">
-      <div v-for="n in visibleNumbers" :key="n" class="grid-item" @click="goTo">
+      <div
+        v-for="n in visibleNumbers"
+        :key="n"
+        class="grid-item"
+        :class="itemClass(n)"
+        @click="goTo"
+      >
         {{ n }}
       </div>
     </div>
@@ -25,11 +31,27 @@ export default {
       type: Number,
       required: true,
     },
+    userAnswers: {
+      type: Object,
+      required: true,
+    },
+    wrongAnswers: {
+      type: Array,
+      required: true,
+    },
+    isSubmitted: {
+      type: Boolean,
+      required: true,
+    },
+    questions: {
+      type: Array,
+      required: true,
+    },
   },
+
   data() {
     return {
       isExpanded: false,
-      initialCount: this.questionNumber > 12 ? 12 : this.questionNumber,
     }
   },
   computed: {
@@ -38,11 +60,32 @@ export default {
         ? Array.from({ length: this.questionNumber }, (_, i) => i + 1)
         : Array.from({ length: this.initialCount }, (_, i) => i + 1)
     },
+    initialCount() {
+      return Math.min(this.questionNumber, 12)
+    },
   },
   methods: {
     toggleExpand() {
       this.isExpanded = !this.isExpanded
       $('.card').toggleClass('expanded')
+    },
+    itemClass(n) {
+      const questionId = this.questions[n - 1]?.id
+      const answer = this.userAnswers[questionId]
+
+      if (!this.isSubmitted) {
+        if (answer === null || answer === undefined || answer === '') {
+          return 'not-answered'
+        } else {
+          return 'answered'
+        }
+      } else {
+        if (this.wrongAnswers.includes(questionId)) {
+          return 'wrong'
+        } else {
+          return 'correct'
+        }
+      }
     },
   },
 }
@@ -101,12 +144,36 @@ export default {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 2px solid #2563eb;
-  color: #2563eb;
+  border: 2px solid gray; /* default gray */
+  color: gray;
   font-size: 16px;
   cursor: pointer;
   user-select: none;
+  transition: all 0.3s ease;
 }
+
+.grid-item.answered {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.grid-item.correct {
+  border-color: #4caf50;
+  color: #4caf50;
+  background-color: #e8f5e9;
+}
+
+.grid-item.wrong {
+  border-color: #f44336;
+  color: #f44336;
+  background-color: #fdecea;
+}
+
+.grid-item.not-answered {
+  border-color: gray;
+  color: gray;
+}
+
 .grid-item:hover {
   background-color: #e0e0e0;
 }
@@ -133,6 +200,4 @@ export default {
 .expand-button:hover {
   background-color: #e0e0e0;
 }
-
-
 </style>

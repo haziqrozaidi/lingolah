@@ -13,6 +13,11 @@ import VideoView from '../views/video/VideoView.vue'
 import ManageFlashcard from '../views/flashcard/admin/FlashcardAdminView.vue'
 import ManageFlashcardSet from '../views/flashcard/admin/FlashcardSetAdminPage.vue'
 import AdminDashboard from '@/views/AdminDashboard.vue'
+import YoutubeLooper from '../views/video/YoutubeLooper.vue'
+import AdminVideoView from '../views/video/AdminVideoView.vue'
+import PlaylistView from '../views/video/PlaylistView.vue'
+import PlaylistDetailView from '../views/video/PlaylistDetailView.vue'
+import AdminQuizView from '@/views/quiz module/QuizesViewAdmin.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -46,19 +51,25 @@ const router = createRouter({
       path: '/admin/community',
       name: 'admin-community',
       component: AdminCommunityView,
-      meta: { requiresAdmin: true }
+      meta: { requiresAdmin: true },
     },
     {
       path: '/admin/community/request',
       name: 'admin-community-request',
       component: AdminCommunityRequest,
-      meta: { requiresAdmin: true }
+      meta: { requiresAdmin: true },
     },
     {
       path: '/admin/community/delete',
       name: 'admin-community-delete',
       component: AdminCommunityDeleteView,
-      meta: { requiresAdmin: true }
+      meta: { requiresAdmin: true },
+    },
+    {
+      path: '/admin/quizes',
+      name: 'admin-quizes',
+      component: AdminQuizView,
+      meta: { requiresAdmin: true },
     },
     {
       path: '/quizes',
@@ -66,9 +77,10 @@ const router = createRouter({
       component: QuizesView,
     },
     {
-      path: '/quiz',
+      path: '/quiz/:quizId',
       name: 'quiz',
       component: QuizView,
+      props: true,
     },
     {
       path: '/video',
@@ -90,7 +102,29 @@ const router = createRouter({
       name: 'admin-dashboard',
       component: AdminDashboard,
       meta: { requiresAdmin: true }
-    }
+    },
+    {
+      path: '/video/looper',
+      name: 'youtube-looper',
+      component: YoutubeLooper,
+    },
+    {
+      path: '/admin/video',
+      name: 'admin-video',
+      component: AdminVideoView,
+      meta: { requiresAdmin: true }
+    },
+    {
+      path: '/playlists',
+      name: 'playlists',
+      component: PlaylistView,
+    },
+    {
+      path: '/playlists/:id',
+      name: 'playlist-detail',
+      component: PlaylistDetailView,
+
+    },
   ],
 })
 

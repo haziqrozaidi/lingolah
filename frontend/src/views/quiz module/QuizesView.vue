@@ -1,144 +1,134 @@
 <template>
   <div class="quizzes-page">
     <h1>Malay Language Quizzes</h1>
-    <div class="quiz-grid">
+
+    <!-- Loading State -->
+    <div v-if="loading" class="text-center py-16">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <p class="mt-4 text-gray-600">Loading quizzes...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error" class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+      <p class="text-red-700">{{ error }}</p>
+      <button
+        @click="loadQuizzes"
+        class="mt-2 px-4 py-2 bg-red-100 text-red-800 rounded hover:bg-red-200"
+      >
+        Try again
+      </button>
+    </div>
+
+    <!-- Quizzes Grid -->
+    <div v-else class="quiz-grid">
       <!-- Beginner Level -->
-      <div class="difficulty-section">
+      <div class="difficulty-section" v-if="beginnerQuizzes.length > 0">
         <h2>Beginner Level</h2>
         <div class="quiz-cards">
-          <QuizCard 
-            title="Basic Greetings"
-            description="Learn common Malay greetings"
-            difficulty="easy"
-            type="term"
-            :question-count="8"
-            @click="startQuiz('greetings')"
-          />
-          <QuizCard 
-            title="Numbers 1-10"
-            description="Match numbers to their Malay words"
-            difficulty="easy"
-            type="match"
-            :question-count="5"
-            @click="startQuiz('numbers')"
-          />
-          <QuizCard 
-            title="Family Members"
-            description="Identify family terms in Malay"
-            difficulty="easy"
-            type="mcq"
-            :question-count="6"
-            @click="startQuiz('family')"
-          />
-          <QuizCard 
-            title="Common Objects"
-            description="Basic everyday items vocabulary"
-            difficulty="easy"
-            type="flashcard"
-            :question-count="10"
-            @click="startQuiz('objects')"
+          <QuizCard
+            v-for="quiz in beginnerQuizzes"
+            :key="quiz.id"
+            :title="quiz.title"
+            :description="quiz.description"
+            :difficulty="quiz.difficulty"
+            :type="quiz.type"
+            :question-count="quiz.questions.length"
+            :quiz-id="quiz.id"
+            @click="startQuiz(quiz.id)"
           />
         </div>
       </div>
 
       <!-- Intermediate Level -->
-      <div class="difficulty-section">
+      <div class="difficulty-section" v-if="intermediateQuizzes.length > 0">
         <h2>Intermediate Level</h2>
         <div class="quiz-cards">
-          <QuizCard 
-            title="Food & Drinks"
-            description="Malay food vocabulary"
-            difficulty="medium"
-            type="match"
-            :question-count="8"
-            @click="startQuiz('food')"
-          />
-          <QuizCard 
-            title="Verb Conjugation"
-            description="Practice common verb forms"
-            difficulty="medium"
-            type="mcq"
-            :question-count="10"
-            @click="startQuiz('verbs')"
-          />
-          <QuizCard 
-            title="Time & Dates"
-            description="Telling time and dates in Malay"
-            difficulty="medium"
-            type="term"
-            :question-count="7"
-            @click="startQuiz('time')"
-          />
-          <QuizCard 
-            title="Shopping Phrases"
-            description="Essential market vocabulary"
-            difficulty="medium"
-            type="fill-blank"
-            :question-count="8"
-            @click="startQuiz('shopping')"
+          <QuizCard
+            v-for="quiz in intermediateQuizzes"
+            :key="quiz.id"
+            :title="quiz.title"
+            :description="quiz.description"
+            :difficulty="quiz.difficulty"
+            :type="quiz.type"
+            :question-count="quiz.questions.length"
+            :quiz-id="quiz.id"
+            @click="startQuiz(quiz.id)"
           />
         </div>
       </div>
 
       <!-- Advanced Level -->
-      <div class="difficulty-section">
+      <div class="difficulty-section" v-if="advancedQuizzes.length > 0">
         <h2>Advanced Level</h2>
         <div class="quiz-cards">
-          <QuizCard 
-            title="Idioms & Proverbs"
-            description="Malay sayings and expressions"
-            difficulty="hard"
-            type="mcq"
-            :question-count="12"
-            @click="startQuiz('idioms')"
-          />
-          <QuizCard 
-            title="Sentence Formation"
-            description="Build proper Malay sentences"
-            difficulty="hard"
-            type="rearrange"
-            :question-count="10"
-            @click="startQuiz('sentences')"
-          />
-          <QuizCard 
-            title="Dialect Comparison"
-            description="Compare standard Malay with regional dialects"
-            difficulty="hard"
-            type="compare"
-            :question-count="8"
-            @click="startQuiz('dialects')"
-          />
-          <QuizCard 
-            title="Listening Comprehension"
-            description="Audio-based questions"
-            difficulty="hard"
-            type="audio"
-            :question-count="6"
-            @click="startQuiz('listening')"
+          <QuizCard
+            v-for="quiz in advancedQuizzes"
+            :key="quiz.id"
+            :title="quiz.title"
+            :description="quiz.description"
+            :difficulty="quiz.difficulty"
+            :type="quiz.type"
+            :question-count="quiz.questions.length"
+            :quiz-id="quiz.id"
+            @click="startQuiz(quiz.id)"
           />
         </div>
       </div>
     </div>
 
     <!-- Quiz Modal -->
-    <QuizModal 
-      v-if="activeQuiz"
-      :quiz-type="activeQuiz"
-      @close="activeQuiz = null"
-    />
+    <QuizModal v-if="activeQuiz" :quiz-type="activeQuiz" @close="activeQuiz = null" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-import QuizCard from '@/components/quiz/QuizCard.vue';
-import QuizModal from '@/components/quiz/QuizModal.vue';
+import { ref, computed, onMounted } from 'vue'
+import QuizCard from '@/components/quiz/QuizCard.vue'
+import QuizModal from '@/components/quiz/QuizModal.vue'
+import { QuizService } from '@/services/quizService' // import your service
+import { useRouter } from 'vue-router'
 
-const activeQuiz = ref(null);
+const router = useRouter()
 
-const startQuiz = (quizType) => {
-  activeQuiz.value = quizType;
-};
+const quizzes = ref([])
+const loading = ref(true)
+const error = ref(null)
+const activeQuiz = ref(null)
+
+// Load quizzes
+const loadQuizzes = async () => {
+  try {
+    loading.value = true
+    error.value = null
+
+    const data = await QuizService.getAllQuizzes()
+    quizzes.value = data
+  } catch (err) {
+    console.error('Error loading quizzes:', err)
+    error.value = 'Failed to load quizzes. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+
+// Filtered computed lists by difficulty
+const beginnerQuizzes = computed(() => quizzes.value.filter((q) => q.difficulty === 'easy'))
+
+const intermediateQuizzes = computed(() => quizzes.value.filter((q) => q.difficulty === 'medium'))
+
+const advancedQuizzes = computed(() => quizzes.value.filter((q) => q.difficulty === 'hard'))
+
+// Start quiz
+const startQuiz = (quizId) => {
+  router.push({ name: 'quiz', params: { quizId: quizId } })
+
+  // Alternatively, you can set activeQuiz to open a modal
+  // activeQuiz.value = quizId
+}
+// Load on mount
+onMounted(() => {
+  loadQuizzes()
+})
 </script>
 
 <style scoped>

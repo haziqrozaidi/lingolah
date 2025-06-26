@@ -81,7 +81,12 @@ export default {
       type: String,
       default: '',
     },
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
   },
+  emits: ['answer', 'favorite-toggled', 'question-reported'],
   data() {
     return {
       userAnswer: '',
@@ -101,23 +106,29 @@ export default {
   methods: {
     toggleFavorite() {
       this.isFavorite = !this.isFavorite
-      this.$emit('favorite-toggled', this.isFavorite)
+      this.$emit('favorite-toggled', {
+        isFavorite: this.isFavorite,
+        timestamp: new Date().toISOString(),
+      })
     },
-
     submitReport() {
       const reportData = {
         option: this.selectedReportOption,
         customReason: this.customReportReason,
         timestamp: new Date().toISOString(),
       }
-
       this.$emit('question-reported', reportData)
       this.showReportPopup = false
       this.selectedReportOption = null
       this.customReportReason = ''
-
-      // Show success message
       alert('Thank you for your report! We will review this question.')
+    },
+  },
+  watch: {
+    userAnswer(newVal) {
+      if (!this.disabled) {
+        this.$emit('answer', newVal)
+      }
     },
   },
 }

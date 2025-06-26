@@ -1,9 +1,5 @@
 <template>
-  <div 
-    class="quiz-card"
-    :class="difficulty"
-    @click="$emit('click')"
-  >
+  <div class="quiz-card" :class="difficulty" @click="$emit('click')">
     <div class="quiz-header">
       <span class="quiz-type">{{ typeLabel }}</span>
       <span class="quiz-difficulty">{{ difficulty }}</span>
@@ -12,20 +8,43 @@
     <p>{{ description }}</p>
     <div class="quiz-footer">
       <span>{{ questionCount }} questions</span>
+      <span v-if="result >= 0"> | Last Result: {{ (result/questionCount * 100).toFixed(0) }}%</span>
     </div>
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { QuizService } from '@/services/quizService'
+import { useUserStore } from '@/stores/userStore'
+import { computed, onMounted, ref } from 'vue'
 
 const props = defineProps({
   title: String,
+  quizId: String,
   description: String,
   difficulty: String,
   type: String,
-  questionCount: Number
-});
+  questionCount: Number,
+})
+
+const userStore = useUserStore()
+const userId = userStore.localUserId
+
+const result = ref(-1) // Default to -1 indicating no previous result
+
+const fetchResult = async () => {
+  const results = await QuizService.getQuizAttempts(props.quizId, userId)
+  if (results.length > 0) {
+    console.log('Previous results:', results)
+    return results[0].result // Assuming the first result is the most recent
+  }
+  console.log(results.length)
+  return -1 // No previous result
+}
+
+onMounted(async () => {
+  result.value = await fetchResult()
+})
 
 const typeLabel = computed(() => {
   const types = {
@@ -36,10 +55,10 @@ const typeLabel = computed(() => {
     'fill-blank': 'Fill Blank',
     rearrange: 'Rearrange',
     compare: 'Comparison',
-    audio: 'Listening'
-  };
-  return types[props.type] || props.type;
-});
+    audio: 'Listening',
+  }
+  return types[props.type] || props.type
+})
 </script>
 
 <style scoped>

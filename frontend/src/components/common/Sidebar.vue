@@ -25,24 +25,19 @@ const navigationSections = ref([
   {
     title: 'Forum',
     isOpen: false,
-    items: [
-      { name: 'Community', path: '/forum', icon: 'pi pi-users' },
-    ],
+    items: [{ name: 'Community', path: '/forum', icon: 'pi pi-users' }],
   },
   {
     title: 'Quiz',
     isOpen: false,
-    items: [
-      { name: 'Quizes', path: '/quizes', icon: 'pi pi-file-edit' },
-      { name: 'Quiz', path: '/quiz', icon: 'pi pi-check' },
-    ],
+    items: [{ name: 'Quizes', path: '/quizes', icon: 'pi pi-file-edit' }],
   },
   {
     title: 'Video',
     isOpen: false,
     items: [
       { name: 'Watch', path: '/video', icon: 'pi pi-video' },
-      { name: 'Help', path: '/help', icon: 'pi pi-question-circle' },
+      { name: 'My playlists', path: '/playlists', icon: 'pi pi-list' },
     ],
   },
 ])
@@ -65,9 +60,7 @@ const adminNavigationSections = ref([
   {
     title: 'Manage Forum',
     isOpen: false,
-    items: [
-      { name: 'Reports', path: '/admin/forum', icon: 'pi pi-chart-bar' },
-    ],
+    items: [{ name: 'Reports', path: '/admin/forum', icon: 'pi pi-chart-bar' }],
   },
   {
     title: 'Manage Community',
@@ -77,6 +70,24 @@ const adminNavigationSections = ref([
       { name: 'Community Request', path: '/admin/community/request', icon: 'pi pi-file-edit' },
       { name: 'Community Delete', path: '/admin/community/delete', icon: 'pi pi-trash' },
     ],
+  },
+  {
+    title: 'Manage Video',
+    isOpen: false,
+    items: [
+      { name: 'Add, edit or delete', path: '/admin/video', icon: 'pi pi-video' }
+      ],
+  },
+  {
+    title: 'Settings',
+    isOpen: false,
+    items: [
+      { name: 'Profile', path: '/admin/profile', icon: 'pi pi-cog' },
+      { name: 'Users', path: '/admin/users', icon: 'pi pi-users' },
+    ],
+    title: 'Manage Quizzes',
+    isOpen: false,
+    items: [{ name: 'Quizzes', path: '/admin/quizes', icon: 'pi pi-file-edit' }],
   },
 ])
 
