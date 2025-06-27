@@ -1,4 +1,4 @@
-# GDRSM System
+# LingoLah
 
 > LingoLah is a web application that helps people learn the Malay language through interactive flashcards, quizzes, videos, and a community forum.
 
