@@ -97,6 +97,8 @@ import ProgressSpinner from 'primevue/progressspinner'
 import Dialog from 'primevue/dialog'
 import Paginator from 'primevue/paginator'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const { session } = useSession()
 const communities = ref([])
 const loading = ref(true)
@@ -135,7 +137,7 @@ const fetchCommunities = async () => {
   feedback.value = ''
   try {
     const token = await session.value.getToken()
-    const res = await fetch('http://localhost:3000/api/community/admin', {
+    const res = await fetch(`${API_URL}/api/community/admin`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
@@ -164,7 +166,7 @@ const deleteCommunity = async () => {
   feedbackType.value = 'success'
   try {
     const token = await session.value.getToken()
-    const res = await fetch(`http://localhost:3000/api/community/${toDelete.value.id}`, {
+    const res = await fetch(`${API_URL}/api/community/${toDelete.value.id}`, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`,

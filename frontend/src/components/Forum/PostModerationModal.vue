@@ -112,6 +112,8 @@
 </template>
 
 <script>
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 export default {
   name: 'PostModerationModal',
   props: {
@@ -149,7 +151,7 @@ export default {
     },
     async fetchReportDetails(postId) {
       try {
-        const res = await fetch(`http://localhost:3000/api/admin/forum/posts/${postId}/report`);
+        const res = await fetch(`${API_URL}/api/admin/forum/posts/${postId}/report`);
         if (!res.ok) throw new Error("Failed to fetch report");
         this.reportDetails = await res.json();
       } catch (e) {
@@ -159,7 +161,7 @@ export default {
     async fetchReportedPost() {
       // Fetch the reported post details from backend (adjust the endpoint as needed)
       try {
-        const res = await fetch(`http://localhost:3000/api/admin/forum/reported/${this.postId}`);
+        const res = await fetch(`${API_URL}/api/admin/forum/reported/${this.postId}`);
         if (!res.ok) throw new Error('Failed to fetch post');
         const data = await res.json();
         this.reportedPost = data;
@@ -173,7 +175,7 @@ export default {
       // Send moderation action to backend to approve the post
       if (this.reportedPost?.reportResolved) return;
       try {
-        const res = await fetch(`http://localhost:3000/api/admin/forum/moderate/${this.postId}/approve`, {
+        const res = await fetch(`${API_URL}/api/admin/forum/moderate/${this.postId}/approve`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ notes: this.moderationNotes })
@@ -190,7 +192,7 @@ export default {
       if (this.reportedPost?.reportResolved) return;
       if (!confirm('Are you sure you want to delete this post?')) return;
       try {
-        const res = await fetch(`http://localhost:3000/api/admin/forum/moderate/${this.postId}/delete`, {
+        const res = await fetch(`${API_URL}/api/admin/forum/moderate/${this.postId}/delete`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ notes: this.moderationNotes })

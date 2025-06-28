@@ -68,6 +68,8 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const props = defineProps({
   userId: {
     type: String,
@@ -87,7 +89,7 @@ const emit = defineEmits(['community-selected'])
 const fetchCommunities = async () => {
   if (!props.userId) return
   // Fetch joined communities (with status)
-  let res = await fetch(`http://localhost:3000/api/community/joined?clerkUserId=${props.userId}`)
+  let res = await fetch(`${API_URL}/api/community/joined?clerkUserId=${props.userId}`)
   let data = await res.json()
   // status can be 'accepted', 'pending', or possibly 'rejected'
   joinedCommunities.value = (data.communities || []).map(comm => ({
@@ -95,7 +97,7 @@ const fetchCommunities = async () => {
     status: comm.status || 'accepted' // fallback to 'accepted' if missing
   }))
   // Fetch available communities
-  res = await fetch(`http://localhost:3000/api/community/available?clerkUserId=${props.userId}`)
+  res = await fetch(`${API_URL}/api/community/available?clerkUserId=${props.userId}`)
   data = await res.json()
   availableCommunities.value = data.communities || []
 }
@@ -104,7 +106,7 @@ const joinCommunity = async (communityId) => {
   if (isJoining.value) return
   isJoining.value = true
   try {
-    const res = await fetch('http://localhost:3000/api/community/join', {
+    const res = await fetch(`${API_URL}/api/community/join`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

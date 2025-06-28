@@ -18,6 +18,8 @@
 </template>
 
 <script>
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 export default {
   name: 'ResolvedReportsSection',
   data() {
@@ -32,7 +34,7 @@ export default {
   methods: {
     async fetchResolvedReports() {
       try {
-        const res = await fetch('http://localhost:3000/api/admin/forum/reported/resolved');
+        const res = await fetch(`${API_URL}/api/admin/forum/reported/resolved`);
         if (!res.ok) throw new Error('Failed to fetch resolved reports');
         this.resolvedReports = await res.json();
       } catch (e) {

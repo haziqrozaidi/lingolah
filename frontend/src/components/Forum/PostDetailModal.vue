@@ -126,6 +126,9 @@
 
 <script>
 import { useUserStore } from "@/stores/userStore";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 export default {
     name: 'PostDetailModal',
     props: {
@@ -190,7 +193,7 @@ export default {
     },
     methods: {
         async fetchDbUserIdByClerkId(clerkUserId) {
-            const res = await fetch(`http://localhost:3000/users/by-clerk-id/${clerkUserId}`);
+            const res = await fetch(`${API_URL}/users/by-clerk-id/${clerkUserId}`);
             if (!res.ok) throw new Error("User not found");
             const data = await res.json();
             return data.id;
@@ -201,7 +204,7 @@ export default {
         async fetchComments() {
             if (!this.post.id) return;
             try {
-                const res = await fetch(`http://localhost:3000/api/forum/posts/${this.post.id}/comments`);
+                const res = await fetch(`${API_URL}/api/forum/posts/${this.post.id}/comments`);
                 if (!res.ok) throw new Error('Failed to fetch comments');
                 this.comments = await res.json();
             } catch (e) {
@@ -213,7 +216,7 @@ export default {
             this.postingComment = true;
             try {
 
-                const res = await fetch(`http://localhost:3000/api/forum/posts/${this.post.id}/comments`, {
+                const res = await fetch(`${API_URL}/api/forum/posts/${this.post.id}/comments`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

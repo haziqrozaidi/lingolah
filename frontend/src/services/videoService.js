@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:3000/api/videos'
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+const API_BASE_URL = `${API_URL}/api/videos`
 
 // Get all videos
 export const getAllVideos = async () => {

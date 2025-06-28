@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 export const useUserStore = defineStore('user', () => {
   // State
   const userId = ref(null)
@@ -44,7 +46,7 @@ export const useUserStore = defineStore('user', () => {
         role: role.value,
       })
 
-      const response = await fetch('http://localhost:3000/users/sync', {
+      const response = await fetch(`${API_URL}/users/sync`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

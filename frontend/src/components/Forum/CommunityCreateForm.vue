@@ -23,6 +23,8 @@
 import { ref } from 'vue'
 import { useSession } from '@clerk/vue'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const props = defineProps({
   userRole: {
     type: String,
@@ -48,7 +50,7 @@ async function createCommunity() {
       return
     }
     const token = await session.value.getToken()
-    const res = await fetch('http://localhost:3000/api/community/create', {
+    const res = await fetch(`${API_URL}/api/community/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

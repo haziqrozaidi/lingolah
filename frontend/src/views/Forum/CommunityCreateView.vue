@@ -92,6 +92,8 @@ import { useUserStore } from '@/stores/userStore'
 import Button from 'primevue/button'
 import Paginator from 'primevue/paginator'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const userStore = useUserStore()
 const userId = userStore.userId
 const userRole = userStore.role
@@ -135,7 +137,7 @@ async function handleKickMember(member) {
   if (!selectedCommunity.value || !member?.user?.id) return
   try {
     const res = await fetch(
-      `http://localhost:3000/api/community/${selectedCommunity.value.id}/members/${member.user.id}`,
+      `${API_URL}/api/community/${selectedCommunity.value.id}/members/${member.user.id}`,
       {
         method: 'DELETE',
         credentials: 'include',
@@ -150,7 +152,7 @@ async function handleKickMember(member) {
   }
 }
 async function fetchCommunities() {
-  const res = await fetch('http://localhost:3000/api/community/joined?clerkUserId=' + encodeURIComponent(userId), {
+  const res = await fetch(`${API_URL}/api/community/joined?clerkUserId=` + encodeURIComponent(userId), {
     credentials: 'include'
   })
   const data = await res.json()
@@ -163,7 +165,7 @@ async function showMembers(community) {
   communityMembers.value = []
   modalOpen.value = true
   try {
-    const res = await fetch(`http://localhost:3000/api/community/${community.id}/members`, {
+    const res = await fetch(`${API_URL}/api/community/${community.id}/members`, {
       credentials: 'include'
     })
     const data = await res.json()

@@ -37,6 +37,9 @@
 <script>
 import PostModerationModal from '@/components/Forum/PostModerationModal.vue';
 import ResolvedReportsSection from '@/components/Forum/ResolvedReportSection.vue';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 export default {
   name: 'ForumModerationPage',
   components: { PostModerationModal, ResolvedReportsSection },
@@ -57,8 +60,8 @@ export default {
   methods: {
     async fetchReports() {
       const [pending, resolved] = await Promise.all([
-        fetch('http://localhost:3000/api/admin/forum/reported/pending').then(r => r.json()),
-        fetch('http://localhost:3000/api/admin/forum/reported/resolved').then(r => r.json())
+        fetch(`${API_URL}/api/admin/forum/reported/pending`).then(r => r.json()),
+        fetch(`${API_URL}/api/admin/forum/reported/resolved`).then(r => r.json())
       ]);
       this.pending = pending;
       this.resolved = resolved;
@@ -71,7 +74,7 @@ export default {
       // For each post, fetch its report details and store in reportDetailsMap
       const promises = posts.map(async post => {
         try {
-          const res = await fetch(`http://localhost:3000/api/admin/forum/posts/${post.id}/report`);
+          const res = await fetch(`${API_URL}/api/admin/forum/posts/${post.id}/report`);
           if (res.ok) {
             const details = await res.json();
             this.reportDetailsMap[post.id] = details;

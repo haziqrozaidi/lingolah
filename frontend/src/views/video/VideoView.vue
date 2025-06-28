@@ -7,6 +7,8 @@ import Toast from 'primevue/toast'
 import AddToPlaylistModal from '@/components/video/AddToPlaylistModal.vue'
 import { getVideosWithWatchStatus, getAllVideos, markVideoAsWatched } from '@/services/videoService'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const router = useRouter()
 const { user } = useUser()
 const videos = ref([]) 
@@ -31,7 +33,7 @@ onMounted(async () => {
     console.error('Error fetching videos:', error)
     // Fallback to basic video fetch
     try {
-      const res = await fetch('http://localhost:3000/api/videos')
+      const res = await fetch(`${API_URL}/api/videos`)
       videos.value = await res.json()
     } catch (fallbackError) {
       console.error('Fallback fetch also failed:', fallbackError)

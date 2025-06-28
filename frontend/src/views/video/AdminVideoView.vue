@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 // PrimeVue composables
 const toast = useToast()
 const confirm = useConfirm()
@@ -30,7 +32,7 @@ const fetchVideos = async () => {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch('http://localhost:3000/api/videos')
+    const res = await fetch(`${API_URL}/api/videos`)
     if (!res.ok) throw new Error('Failed to fetch videos')
     videos.value = await res.json()
   } catch (e) {
@@ -53,7 +55,7 @@ const addVideo = async () => {
   }
   
   try {
-    const res = await fetch('http://localhost:3000/api/videos', {
+    const res = await fetch(`${API_URL}/api/videos`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newVideo.value),
@@ -98,7 +100,7 @@ const cancelEdit = () => {
 // Save changes to the currently edited video
 const saveEdit = async () => {
   try {
-    const res = await fetch(`http://localhost:3000/api/videos/${editingVideo.value.id}`, {
+    const res = await fetch(`${API_URL}/api/videos/${editingVideo.value.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editForm.value),
@@ -139,7 +141,7 @@ const deleteVideo = async (videoId, videoTitle) => {
     acceptClass: 'p-button-danger',
     accept: async () => {
       try {
-        const res = await fetch(`http://localhost:3000/api/videos/${videoId}`, { 
+        const res = await fetch(`${API_URL}/api/videos/${videoId}`, { 
           method: 'DELETE' 
         })
         

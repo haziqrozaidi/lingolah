@@ -86,6 +86,8 @@ import { storeToRefs } from 'pinia'
 import { useSession } from '@clerk/vue'
 import Paginator from 'primevue/paginator'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const { session } = useSession()
 const userStore = useUserStore()
 const { userId } = storeToRefs(userStore)
@@ -108,7 +110,7 @@ function onPage(event) {
 
 const fetchAdminCommunities = async () => {
   const token = await session.value.getToken()
-  const res = await fetch('http://localhost:3000/api/community/admin', {
+  const res = await fetch(`${API_URL}/api/community/admin`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
@@ -122,7 +124,7 @@ const fetchAdminCommunities = async () => {
 const fetchPendingMembers = async (communityId) => {
   const token = await session.value.getToken()
   const res = await fetch(
-    `http://localhost:3000/api/community/${communityId}/members?status=pending`,
+    `${API_URL}/api/community/${communityId}/members?status=pending`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -137,7 +139,7 @@ const fetchPendingMembers = async (communityId) => {
 
 const handleMemberAction = async (communityId, memberId, action) => {
   const token = await session.value.getToken()
-  const url = `http://localhost:3000/api/community/${communityId}/members/${memberId}/${action}`
+  const url = `${API_URL}/api/community/${communityId}/members/${memberId}/${action}`
   const res = await fetch(url, {
     method: 'POST',
     headers: {

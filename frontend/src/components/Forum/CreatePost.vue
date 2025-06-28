@@ -26,6 +26,9 @@
 
 <script>
 import { useUserStore } from "@/stores/userStore";
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 export default {
   name: "CreatePost",
   props: {
@@ -40,10 +43,10 @@ export default {
   methods: {
     async submit() {
       const userStore = useUserStore();
-      const dbUserId = await fetch(`http://localhost:3000/users/by-clerk-id/${userStore.userId}`)
+      const dbUserId = await fetch(`${API_URL}/users/by-clerk-id/${userStore.userId}`)
         .then(res => res.json()).then(d => d.id);
 
-      await fetch('http://localhost:3000/api/forum/posts', {
+      await fetch(`${API_URL}/api/forum/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

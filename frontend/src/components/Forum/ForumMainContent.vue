@@ -238,6 +238,8 @@ import ReportPostDialog from '@/components/Forum/ReportPostDialog.vue'
 import CreatePost from './CreatePost.vue'
 import { useUserStore } from "@/stores/userStore";
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const PAGE_SIZE = 6;
 
 export default {
@@ -362,13 +364,13 @@ export default {
     },
     async fetchUserProfile(userId) {
       if (!userId) return null;
-      const res = await fetch(`http://localhost:3000/api/clerk-user/${userId}`);
+      const res = await fetch(`${API_URL}/api/clerk-user/${userId}`);
       if (!res.ok) return null;
       return await res.json();
     },
     async countView(postId) {
       if (!postId) return;
-      await fetch(`http://localhost:3000/api/forum/posts/${postId}/view`, { method: 'POST' });
+      await fetch(`${API_URL}/api/forum/posts/${postId}/view`, { method: 'POST' });
     },
     setCategoryFilter(cat) {
       this.selectedCategory = cat;
@@ -386,13 +388,13 @@ export default {
       this.activeMenu = null;
     },
     async fetchDbUserIdByClerkId(clerkUserId) {
-      const res = await fetch(`http://localhost:3000/users/by-clerk-id/${clerkUserId}`);
+      const res = await fetch(`${API_URL}/users/by-clerk-id/${clerkUserId}`);
       if (!res.ok) throw new Error("User not found");
       const data = await res.json();
       return data.id;
     },
     async fetchPosts() {
-      const res = await fetch('http://localhost:3000/api/forum/posts');
+      const res = await fetch(`${API_URL}/api/forum/posts`);
       const allPosts = await res.json();
       this.posts = allPosts;
 
@@ -418,7 +420,7 @@ export default {
       if (!this.dbUserId) {
         this.dbUserId = await this.fetchDbUserIdByClerkId(userStore.userId);
       }
-      await fetch('http://localhost:3000/api/forum/posts', {
+      await fetch(`${API_URL}/api/forum/posts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -441,7 +443,7 @@ export default {
       this.editPost = { id: '', title: '', content: '', category: '' };
     },
     async updatePost() {
-      await fetch(`http://localhost:3000/api/forum/posts/${this.editPost.id}`, {
+      await fetch(`${API_URL}/api/forum/posts/${this.editPost.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -455,7 +457,7 @@ export default {
     },
     async deletePost(id) {
       if (!confirm('Are you sure you want to delete this post?')) return;
-      await fetch(`http://localhost:3000/api/forum/posts/${id}`, {
+      await fetch(`${API_URL}/api/forum/posts/${id}`, {
         method: 'DELETE'
       });
       await this.fetchPosts();
@@ -464,13 +466,13 @@ export default {
       return new Date(date).toLocaleString();
     },
     async fetchLikeStatus(postId) {
-      const res = await fetch(`http://localhost:3000/api/forum/posts/${postId}/like-status?userId=${this.dbUserId}`);
+      const res = await fetch(`${API_URL}/api/forum/posts/${postId}/like-status?userId=${this.dbUserId}`);
       const data = await res.json();
       this.likes[postId] = data.count;
       this.liked[postId] = data.liked;
     },
     async toggleLike(postId) {
-      await fetch(`http://localhost:3000/api/forum/posts/${postId}/like`, {
+      await fetch(`${API_URL}/api/forum/posts/${postId}/like`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: this.dbUserId })
@@ -482,7 +484,7 @@ export default {
       this.countView(postId);
     },
     async fetchComments(postId) {
-      const res = await fetch(`http://localhost:3000/api/forum/posts/${postId}/comments`);
+      const res = await fetch(`${API_URL}/api/forum/posts/${postId}/comments`);
       const comments = await res.json();
       this.commentLists[postId] = comments;
 
@@ -499,7 +501,7 @@ export default {
     async postComment(postId) {
       const content = this.commentInputs[postId];
       if (!content) return;
-      await fetch(`http://localhost:3000/api/forum/posts/${postId}/comments`, {
+      await fetch(`${API_URL}/api/forum/posts/${postId}/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content, userId: this.dbUserId })
@@ -523,7 +525,7 @@ export default {
       }
 
       try {
-        const res = await fetch(`http://localhost:3000/api/forum/posts/${post.id}`);
+        const res = await fetch(`${API_URL}/api/forum/posts/${post.id}`);
         if (res.ok) {
           const updatedPost = await res.json();
           this.detailPostData = updatedPost;

@@ -3,6 +3,8 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import 'vue-plyr/dist/vue-plyr.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const route = useRoute()
 const videoId = computed(() => route.query.id || 'bTqVqk7FSmY')
 const videoData = ref(null) // To store video details
@@ -15,7 +17,7 @@ async function fetchVideoDetails() {
     
     if (youtubeId) {
       // API call to fetch video details by YouTube ID
-      const response = await fetch(`http://localhost:3000/api/videos/youtube/${youtubeId}`)
+      const response = await fetch(`${API_URL}/api/videos/youtube/${youtubeId}`)
       
       if (response.ok) {
         videoData.value = await response.json()

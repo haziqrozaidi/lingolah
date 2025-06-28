@@ -2,6 +2,8 @@
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
 const admin = ref({
   name: 'Admin User',
   role: 'Administrator'
@@ -42,7 +44,7 @@ const fetchDashboardStats = async () => {
   loading.value = true
   error.value = null
   try {
-    const res = await fetch('http://localhost:3000/api/admin/dashboard')
+    const res = await fetch(`${API_URL}/api/admin/dashboard`)
     if (!res.ok) throw new Error('Failed to fetch dashboard stats')
     const data = await res.json()
     flashcardStats.value = data.flashcards
