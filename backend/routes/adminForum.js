@@ -1,3 +1,4 @@
+require('dotenv').config()
 var express = require("express");
 var router = express.Router();
 const { PrismaClient } = require("../generated/prisma");
@@ -7,7 +8,7 @@ router.use(express.json());
 router.use(express.urlencoded({ extended: false }));
 // Apply CORS ONLY to this router
 router.use(cors({
-  origin: 'http://localhost:5173',
+  origin: process.env.FRONTEND_URL,
   credentials: true
 }));
 function requireAdmin(req, res, next) {
