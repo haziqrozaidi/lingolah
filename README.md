@@ -17,7 +17,7 @@
 
 LingoLah is a website that helps people learn the Malay language in a fun and easy way. It has four main parts: flashcards to help you remember new words, quizzes to practice grammar and understanding, videos with subtitles to improve listening skills, and a forum where you can ask questions or chat with other learners. You can track your progress, join discussions, and use different types of learning tools all in one place. LingoLah is made for everyone, whether you are just starting out or already know some Malay.
 
-Try the live application here: [LingoLah](https://lingolah.haziqrozaidi.me/)
+Try the live application here: [LingoLah](https://lingolah.live/)
 
 ## Features
 
