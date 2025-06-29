@@ -10,7 +10,7 @@ const cors = require('cors');
 router.use(express.json());
 router.use(express.urlencoded({ extended: false }));
 router.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: [process.env.FRONTEND_URL, 'https://lingolah.haziqrozaidi.me', 'http://127.0.0.1:5173'],
   credentials: true
 }));
 

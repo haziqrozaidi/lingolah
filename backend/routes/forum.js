@@ -8,7 +8,7 @@ const cors = require('cors');
 
 // Apply CORS ONLY to this router
 router.use(cors({
-  origin: process.env.FRONTEND_URL,
+  origin: [process.env.FRONTEND_URL, 'https://lingolah.haziqrozaidi.me', 'http://127.0.0.1:5173'],
   credentials: true
 }));
 // Get all posts
